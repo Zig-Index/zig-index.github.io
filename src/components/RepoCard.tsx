@@ -18,6 +18,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Skeleton } from "./ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { CombinedRepoData } from "@/lib/schemas";
 
@@ -268,33 +269,33 @@ export function RegistryCard({ entry, compact = false }: RegistryCardProps) {
 
 export function RegistryCardSkeleton({ compact = false }: { compact?: boolean }) {
   return (
-    <Card className="h-full flex flex-col min-h-[280px]">
+    <Card className="h-full flex flex-col min-h-[280px] animate-in fade-in-0 duration-300">
       <CardHeader className={cn("pb-2", compact && "pb-1")}>
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 space-y-2">
             <div className="flex gap-2">
-              <div className="h-5 w-16 bg-muted animate-pulse rounded" />
-              <div className="h-5 w-12 bg-muted animate-pulse rounded" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-5 w-12 rounded-full" />
             </div>
-            <div className={cn("h-6 bg-muted animate-pulse rounded", compact ? "w-32" : "w-48")} />
-            <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+            <Skeleton className={cn("h-6 rounded", compact ? "w-32" : "w-48")} />
+            <Skeleton className="h-3 w-20 rounded" />
           </div>
         </div>
       </CardHeader>
       <CardContent className={cn("flex-1", compact && "pb-2")}>
         <div className="space-y-2">
-          <div className="h-4 bg-muted animate-pulse rounded" />
-          <div className="h-4 w-2/3 bg-muted animate-pulse rounded" />
+          <Skeleton className="h-4 w-full rounded" />
+          <Skeleton className="h-4 w-2/3 rounded" />
         </div>
         <div className={cn("flex gap-4", compact ? "mt-2" : "mt-4")}>
-          <div className="h-4 w-12 bg-muted animate-pulse rounded" />
-          <div className="h-4 w-12 bg-muted animate-pulse rounded" />
-          <div className="h-4 w-12 bg-muted animate-pulse rounded" />
+          <Skeleton className="h-4 w-12 rounded" />
+          <Skeleton className="h-4 w-12 rounded" />
+          <Skeleton className="h-4 w-12 rounded" />
         </div>
       </CardContent>
       <CardFooter className={cn("pt-0 gap-2", compact && "pb-3")}>
-        <div className="h-8 flex-1 bg-muted animate-pulse rounded" />
-        <div className="h-8 flex-1 bg-muted animate-pulse rounded" />
+        <Skeleton className="h-9 flex-1 rounded-md" />
+        <Skeleton className="h-9 flex-1 rounded-md" />
       </CardFooter>
     </Card>
   );

@@ -6,6 +6,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
+import { Skeleton } from "./ui/skeleton";
 import { 
   Search, 
   Package, 
@@ -117,15 +118,16 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
         searchItems={items}
       />
       
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative py-12 sm:py-16 lg:py-20 overflow-hidden mesh-gradient">
-          {/* Background Elements */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-linear-to-br from-primary/10 to-purple-500/10 rounded-full blur-3xl blob" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-linear-to-tr from-blue-500/10 to-primary/10 rounded-full blur-3xl blob blob-delay-1" />
-          </div>
+      <main className="flex-1 mesh-gradient relative overflow-hidden">
+        {/* Background Elements - Fixed position for entire page */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-linear-to-br from-primary/10 to-purple-500/10 rounded-full blur-3xl blob" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-linear-to-tr from-blue-500/10 to-primary/10 rounded-full blur-3xl blob blob-delay-1" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
+        </div>
 
+        {/* Hero Section */}
+        <section className="relative py-12 sm:py-16 lg:py-20">
           <div className="container mx-auto px-4 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -203,7 +205,7 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
       </section>
 
       {/* Results Section */}
-      <section className="pb-16">
+      <section className="pb-16 relative z-10">
         <div className="container mx-auto px-4">
           {/* Results Header */}
           <div className="flex items-center justify-between mb-6">
@@ -228,7 +230,19 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
 
           {/* Results Grid */}
           <AnimatePresence mode="wait">
-            {results.length > 0 ? (
+            {isSearching ? (
+              <motion.div
+                key="skeleton"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+              >
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SearchResultSkeleton key={i} index={i} />
+                ))}
+              </motion.div>
+            ) : results.length > 0 ? (
               <motion.div
                 key="results"
                 initial={{ opacity: 0 }}
@@ -314,6 +328,31 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
       
       <Footer />
     </div>
+  );
+}
+
+// Skeleton component for search results
+function SearchResultSkeleton({ index }: { index: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="bg-card border rounded-xl p-5"
+    >
+      <div className="flex items-start gap-4">
+        <Skeleton className="w-11 h-11 rounded-lg shrink-0" />
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+          </div>
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-20 mt-1" />
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
