@@ -47,7 +47,7 @@ function parseRateLimitHeaders(headers: Headers): RateLimitInfo | null {
 
 // Get auth headers
 // Token can be set via:
-// 1. Environment variable GITHUB_TOKEN (set in .env file)
+// 1. Environment variable GITHUB_TOKEN or GH_TOKEN (set in .env file or CI)
 // 2. localStorage "github_token" (for user-provided tokens)
 //
 // To get a GitHub token:
@@ -60,8 +60,9 @@ function getAuthHeaders(): Record<string, string> {
     "Accept": "application/vnd.github.v3+json",
   };
   
-  // First check environment variable (build-time or SSR)
-  const envToken = import.meta.env.GITHUB_TOKEN;
+  // First check environment variables (build-time or SSR)
+  // Check both GITHUB_TOKEN and GH_TOKEN for flexibility
+  const envToken = import.meta.env.GITHUB_TOKEN || import.meta.env.GH_TOKEN;
   if (envToken) {
     headers["Authorization"] = `Bearer ${envToken}`;
     return headers;
