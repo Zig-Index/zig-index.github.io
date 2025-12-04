@@ -135,12 +135,13 @@ const schemaJson = JSON.stringify(schema || defaultSchema);
     <!-- Structured Data / JSON-LD -->
     <script type="application/ld+json" set:html={schemaJson} />
     
-    <!-- Google Analytics (gtag.js) -->
+    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-KQ8C71NKHG"></script>
     <script is:inline>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
+
       gtag('config', 'G-KQ8C71NKHG');
     </script>
     
