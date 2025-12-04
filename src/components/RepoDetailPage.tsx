@@ -111,6 +111,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     type: entry?.type,
     htmlUrl: entry?.htmlUrl || `https://github.com/${owner}/${name}`,
     // From stats (will be undefined while loading)
+    topics: stats?.topics || [],
     stargazers_count: stats?.stargazers_count,
     forks_count: stats?.forks_count,
     watchers_count: stats?.watchers_count,
@@ -155,6 +156,17 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                 <p className="text-lg text-muted-foreground mb-4">
                   {displayData.description}
                 </p>
+
+                {/* Topics/Tags */}
+                {displayData.topics.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {displayData.topics.map((topic) => (
+                      <Badge key={topic} variant="outline" className="text-xs">
+                        {topic}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
 
                 {/* Badges */}
                 <div className="flex flex-wrap gap-2 mb-4">
