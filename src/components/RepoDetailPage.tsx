@@ -104,7 +104,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     name: entry?.name || name,
     owner: entry?.owner || owner,
     fullName,
-    description: entry?.description || "No description available",
+    description: entry?.description || stats?.description || "No description available",
     homepage: entry?.homepage,
     license: entry?.license,
     category: entry?.category,

@@ -29,6 +29,7 @@ export type RegistryEntryWithCategory = RegistryEntry & {
 
 export const LiveStatsSchema = z.object({
   fullName: z.string(),
+  description: z.string().nullable(),
   stargazers_count: z.number(),
   forks_count: z.number(),
   watchers_count: z.number(),
@@ -130,6 +131,7 @@ export type Pagination = z.infer<typeof PaginationSchema>;
 export function convertGitHubRepoToLiveStats(repo: GitHubRepo): LiveStats {
   return {
     fullName: repo.full_name,
+    description: repo.description,
     stargazers_count: repo.stargazers_count,
     forks_count: repo.forks_count,
     watchers_count: repo.watchers_count || 0,
