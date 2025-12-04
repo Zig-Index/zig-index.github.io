@@ -12,7 +12,6 @@ import {
   Calendar, 
   Scale,
   Code,
-  Loader2,
   FileText,
   Home,
   Package,
@@ -79,7 +78,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     queryKey: ["repoStats", fullName],
     queryFn: async () => {
       const result = await fetchRepoStatsWithCache(owner, name);
-      return { stats: result.stats, status: result.status, fromCache: result.fromCache };
+      return { stats: result.stats, status: result.status, fromCache: result.fromCache, isStale: result.isStale };
     },
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -89,36 +88,18 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     queryKey: ["repoReadme", fullName],
     queryFn: async () => {
       const result = await fetchRepoReadmeWithCache(owner, name);
-      return result.readme;
+      return { readme: result.readme, isStale: result.isStale };
     },
     staleTime: 1000 * 60 * 60, // 1 hour
   });
 
   const stats = statsResult?.stats;
   const repoStatus = statsResult?.status || "unknown";
-  const readme = readmeResult;
+  const readme = readmeResult?.readme;
   const isDeleted = repoStatus === "deleted";
 
-  if (statsLoading) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 mesh-gradient relative overflow-hidden">
-          {/* Background decoration */}
-          <div className="absolute inset-0 -z-10 pointer-events-none">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-3xl" />
-          </div>
-          <div className="container mx-auto px-4 py-8 relative z-10">
-            <RepoDetailSkeleton />
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   // Build display data from entry and/or stats
+  // Show entry data immediately, stats will load separately
   const displayData = {
     name: entry?.name || name,
     owner: entry?.owner || owner,
@@ -129,10 +110,10 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     category: entry?.category,
     type: entry?.type,
     htmlUrl: entry?.htmlUrl || `https://github.com/${owner}/${name}`,
-    // From stats
-    stargazers_count: stats?.stargazers_count || 0,
-    forks_count: stats?.forks_count || 0,
-    watchers_count: stats?.watchers_count || 0,
+    // From stats (will be undefined while loading)
+    stargazers_count: stats?.stargazers_count,
+    forks_count: stats?.forks_count,
+    watchers_count: stats?.watchers_count,
     language: stats?.language,
     pushed_at: stats?.pushed_at,
     updated_at: stats?.updated_at,
@@ -307,7 +288,11 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                       <Star className="w-4 h-4" />
                       Stars
                     </span>
-                    <span className="font-semibold">{formatNumber(displayData.stargazers_count)}</span>
+                    {statsLoading ? (
+                      <Skeleton className="h-5 w-12" />
+                    ) : (
+                      <span className="font-semibold">{formatNumber(displayData.stargazers_count ?? 0)}</span>
+                    )}
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
@@ -315,7 +300,11 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                       <GitFork className="w-4 h-4" />
                       Forks
                     </span>
-                    <span className="font-semibold">{formatNumber(displayData.forks_count)}</span>
+                    {statsLoading ? (
+                      <Skeleton className="h-5 w-12" />
+                    ) : (
+                      <span className="font-semibold">{formatNumber(displayData.forks_count ?? 0)}</span>
+                    )}
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
@@ -323,7 +312,11 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                       <Eye className="w-4 h-4" />
                       Watchers
                     </span>
-                    <span className="font-semibold">{formatNumber(displayData.watchers_count)}</span>
+                    {statsLoading ? (
+                      <Skeleton className="h-5 w-12" />
+                    ) : (
+                      <span className="font-semibold">{formatNumber(displayData.watchers_count ?? 0)}</span>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -334,38 +327,59 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                   <CardTitle>Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {displayData.language && (
+                  {statsLoading ? (
                     <>
                       <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                          <Code className="w-4 h-4" />
-                          Language
-                        </span>
-                        <Badge variant="secondary">{displayData.language}</Badge>
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-6 w-16 rounded-full" />
                       </div>
                       <Separator />
-                    </>
-                  )}
-                  {displayData.license && (
-                    <>
                       <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                          <Scale className="w-4 h-4" />
-                          License
-                        </span>
-                        <span className="text-sm">{displayData.license}</span>
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-24" />
                       </div>
                       <Separator />
+                      <div className="flex items-center justify-between">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-28" />
+                      </div>
                     </>
-                  )}
-                  {displayData.pushed_at && (
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar className="w-4 h-4" />
-                        Last Push
-                      </span>
-                      <span className="text-sm">{formatDate(displayData.pushed_at)}</span>
-                    </div>
+                  ) : (
+                    <>
+                      {displayData.language && (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-2 text-muted-foreground">
+                              <Code className="w-4 h-4" />
+                              Language
+                            </span>
+                            <Badge variant="secondary">{displayData.language}</Badge>
+                          </div>
+                          <Separator />
+                        </>
+                      )}
+                      {displayData.license && (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-2 text-muted-foreground">
+                              <Scale className="w-4 h-4" />
+                              License
+                            </span>
+                            <span className="text-sm">{displayData.license}</span>
+                          </div>
+                          <Separator />
+                        </>
+                      )}
+                      {displayData.pushed_at && (
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="w-4 h-4" />
+                            Last Push
+                          </span>
+                          <span className="text-sm">{formatDate(displayData.pushed_at)}</span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </CardContent>
               </Card>
@@ -417,144 +431,6 @@ export function RepoDetailPage(props: RepoDetailPageProps) {
     <QueryClientProvider client={queryClient}>
       <RepoDetailPageContent {...props} />
     </QueryClientProvider>
-  );
-}
-
-function RepoDetailSkeleton() {
-  return (
-    <div className="space-y-8 animate-in fade-in-0 duration-300">
-      {/* Header Skeleton */}
-      <div className="border-b border-border/50 pb-8">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 mb-4">
-          <Skeleton className="h-4 w-12" />
-          <span className="text-muted-foreground">/</span>
-          <Skeleton className="h-4 w-16" />
-          <span className="text-muted-foreground">/</span>
-          <Skeleton className="h-4 w-32" />
-        </div>
-        
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-          <div className="flex-1">
-            {/* Title */}
-            <div className="flex items-center gap-3 mb-3">
-              <div>
-                <Skeleton className="h-9 w-48 mb-2" />
-                <Skeleton className="h-5 w-24" />
-              </div>
-            </div>
-            {/* Description */}
-            <Skeleton className="h-6 w-full max-w-xl mb-4" />
-            <Skeleton className="h-6 w-3/4 max-w-lg mb-4" />
-            {/* Badges */}
-            <div className="flex flex-wrap gap-2">
-              <Skeleton className="h-6 w-20 rounded-full" />
-              <Skeleton className="h-6 w-24 rounded-full" />
-              <Skeleton className="h-6 w-16 rounded-full" />
-              <Skeleton className="h-6 w-20 rounded-full" />
-            </div>
-          </div>
-          {/* Action buttons */}
-          <div className="flex flex-wrap lg:flex-col gap-2">
-            <Skeleton className="h-10 w-36" />
-            <Skeleton className="h-10 w-28" />
-          </div>
-        </div>
-      </div>
-
-      {/* Content Grid */}
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* README Skeleton */}
-        <div className="lg:col-span-2">
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-5 w-5" />
-                <Skeleton className="h-6 w-20" />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-4 w-full" />
-              <div className="py-2" />
-              <Skeleton className="h-6 w-1/2" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-4/5" />
-              <Skeleton className="h-40 w-full rounded-lg" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Sidebar Skeleton */}
-        <div className="space-y-6">
-          {/* Stats Card */}
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-24" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-12" />
-                </div>
-                <Skeleton className="h-5 w-10" />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-12" />
-                </div>
-                <Skeleton className="h-5 w-10" />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-                <Skeleton className="h-5 w-10" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Info Card */}
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-28" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-4 w-20" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Links Card */}
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-16" />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
   );
 }
 

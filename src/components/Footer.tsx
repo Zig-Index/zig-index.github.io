@@ -17,13 +17,17 @@ const footerLinks = {
   community: [
     { label: "GitHub", href: "https://github.com/Zig-Index/zig-index.github.io", external: true },
   ],
+  legal: [
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
+  ],
 };
 
 export function Footer() {
   return (
     <footer className="border-t bg-muted/30">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           <div className="sm:col-span-2 lg:col-span-1">
             <a href="/" className="flex items-center gap-2 mb-4" title="Zig Index Home">
               <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg hover:scale-105 transition-transform">
@@ -124,6 +128,24 @@ export function Footer() {
                   Donate
                 </a>
               </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h3 className="font-semibold mb-4">Legal</h3>
+            <ul className="space-y-2">
+              {footerLinks.legal.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    title={link.label}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

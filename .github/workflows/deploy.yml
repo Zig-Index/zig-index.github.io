@@ -25,6 +25,12 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Update submodule to latest
+        run: |
+          git submodule update --init --recursive --remote
+          echo "Submodule updated to latest commit"
 
       - name: Install, build, and upload your site
         uses: withastro/action@v3

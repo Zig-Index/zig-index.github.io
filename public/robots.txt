@@ -1,0 +1,18 @@
+# Robots.txt for Zig Index
+# https://zig-index.github.io
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://zig-index.github.io/sitemap-index.xml
+
+# Allow search engines to crawl all content
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /

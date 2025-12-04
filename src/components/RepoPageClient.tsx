@@ -5,7 +5,134 @@ import { RepoDetailPage as RepoDetailContent } from "./RepoDetailPage";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { EmptyState } from "./SyncStatus";
+import { Skeleton } from "./ui/skeleton";
+import { Card, CardContent, CardHeader } from "./ui/card";
+import { Separator } from "./ui/separator";
 import { FileText } from "lucide-react";
+
+// Skeleton for initial page load (before URL params are parsed)
+function RepoPageSkeleton() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-1 mesh-gradient relative overflow-hidden">
+        {/* Header skeleton */}
+        <div className="border-b hero-gradient relative overflow-hidden">
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-primary/10 rounded-full blur-3xl" />
+          </div>
+          <div className="container mx-auto px-4 py-8 relative z-10">
+            {/* Breadcrumb skeleton */}
+            <div className="flex items-center gap-2 mb-4">
+              <Skeleton className="h-4 w-12" />
+              <span className="text-muted-foreground">/</span>
+              <Skeleton className="h-4 w-16" />
+              <span className="text-muted-foreground">/</span>
+              <Skeleton className="h-4 w-24" />
+            </div>
+            
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+              <div className="flex-1">
+                <Skeleton className="h-9 w-48 mb-2" />
+                <Skeleton className="h-5 w-24 mb-4" />
+                <Skeleton className="h-6 w-full max-w-xl mb-4" />
+                <div className="flex flex-wrap gap-2">
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                </div>
+              </div>
+              <div className="flex flex-wrap lg:flex-col gap-2">
+                <Skeleton className="h-10 w-36" />
+                <Skeleton className="h-10 w-28" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content skeleton */}
+        <div className="container mx-auto px-4 py-8 relative z-10">
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* README skeleton */}
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-5" />
+                    <Skeleton className="h-6 w-20" />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Skeleton className="h-8 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Sidebar skeleton */}
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-24" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-5 w-12" />
+                  </div>
+                  <Separator />
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-14" />
+                    <Skeleton className="h-5 w-12" />
+                  </div>
+                  <Separator />
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-18" />
+                    <Skeleton className="h-5 w-12" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-20" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </div>
+                  <Separator />
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-16" />
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
 
 // Client-side component that extracts owner/name from URL hash
 export function RepoPageClient() {
@@ -60,15 +187,7 @@ export function RepoPageClient() {
   }
 
   if (!owner || !name) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
-          <div className="animate-pulse text-muted-foreground">Loading...</div>
-        </main>
-        <Footer />
-      </div>
-    );
+    return <RepoPageSkeleton />;
   }
 
   return <RepoDetailContent owner={owner} name={name} />;

@@ -41,6 +41,7 @@ import type { LiveStats, RepoStatus } from './schemas';
 /**
  * Fetch repo stats with IndexedDB caching
  * Returns cached data if fresh, otherwise fetches from API and caches
+ * Falls back to stale cached data if API fails (rate limit, network error)
  */
 export async function fetchRepoStatsWithCache(
   owner: string,
@@ -52,10 +53,11 @@ export async function fetchRepoStatsWithCache(
   fromCache: boolean;
   rateLimit: RateLimitInfo | null;
   error?: string;
+  isStale?: boolean;
 }> {
   const fullName = `${owner}/${repo}`;
   
-  // Try to get from cache first (unless force refresh)
+  // Try to get fresh cached data first (unless force refresh)
   if (!forceRefresh) {
     const cached = await getCachedRepoStats(fullName, true);
     if (cached) {
@@ -64,30 +66,58 @@ export async function fetchRepoStatsWithCache(
         status: cached.status,
         fromCache: true,
         rateLimit: null,
+        isStale: false,
       };
     }
   }
   
+  // Get stale cached data as fallback (don't check expiry)
+  const staleCached = await getCachedRepoStats(fullName, false);
+  
   // Fetch from API
   const result = await fetchRepoStatsAPI(owner, repo);
   
-  // Cache the result (even if error, cache the status)
+  // If API fetch succeeded, cache and return fresh data
   if (result.stats || result.status === 'deleted') {
     await setCachedRepoStats(fullName, result.stats, result.status);
+    return {
+      stats: result.stats,
+      status: result.status,
+      fromCache: false,
+      rateLimit: result.rateLimit,
+      error: result.error,
+      isStale: false,
+    };
   }
   
+  // API failed - fall back to stale cached data if available
+  if (result.error && staleCached) {
+    console.log(`[Cache] API failed for ${fullName}, using stale cached data`);
+    return {
+      stats: staleCached.stats,
+      status: staleCached.status,
+      fromCache: true,
+      rateLimit: result.rateLimit,
+      error: result.error,
+      isStale: true, // Indicate data is stale
+    };
+  }
+  
+  // No cached data available, return the error
   return {
     stats: result.stats,
     status: result.status,
     fromCache: false,
     rateLimit: result.rateLimit,
     error: result.error,
+    isStale: false,
   };
 }
 
 /**
  * Fetch multiple repo stats with IndexedDB caching
  * Efficiently fetches only repos that need refresh
+ * Falls back to stale cached data if API fails
  */
 export async function fetchMultipleRepoStatsWithCache(
   repos: { owner: string; repo: string }[],
@@ -100,8 +130,11 @@ export async function fetchMultipleRepoStatsWithCache(
   
   const fullNames = repos.map(r => `${r.owner}/${r.repo}`);
   
-  // Get all cached data first
+  // Get all cached data first (fresh only, unless force refresh)
   const cachedData = await getCachedMultipleRepoStats(fullNames, !forceRefresh);
+  
+  // Also get stale cached data as fallback (don't check expiry)
+  const staleCachedData = await getCachedMultipleRepoStats(fullNames, false);
   
   // Determine which repos need fresh data
   const reposToFetch: { owner: string; repo: string }[] = [];
@@ -131,20 +164,43 @@ export async function fetchMultipleRepoStatsWithCache(
     const toCache: Array<{ fullName: string; stats: LiveStats | null; status: RepoStatus }> = [];
     
     for (const [fullName, data] of freshData) {
-      results.set(fullName, {
-        stats: data.stats,
-        status: data.status,
-        fromCache: false,
-      });
-      toCache.push({
-        fullName,
-        stats: data.stats,
-        status: data.status,
-      });
+      // If API returned valid data, use it
+      if (data.stats || data.status === 'deleted') {
+        results.set(fullName, {
+          stats: data.stats,
+          status: data.status,
+          fromCache: false,
+        });
+        toCache.push({
+          fullName,
+          stats: data.stats,
+          status: data.status,
+        });
+      } else {
+        // API failed - fall back to stale cached data if available
+        const staleCached = staleCachedData.get(fullName);
+        if (staleCached) {
+          console.log(`[Cache] API failed for ${fullName}, using stale cached data`);
+          results.set(fullName, {
+            stats: staleCached.stats,
+            status: staleCached.status,
+            fromCache: true,
+          });
+        } else {
+          // No cached data, add with error status
+          results.set(fullName, {
+            stats: null,
+            status: data.status,
+            fromCache: false,
+          });
+        }
+      }
     }
     
-    // Bulk cache the fresh data
-    await setCachedMultipleRepoStats(toCache);
+    // Bulk cache only the fresh data (not the fallbacks)
+    if (toCache.length > 0) {
+      await setCachedMultipleRepoStats(toCache);
+    }
   }
   
   return results;
@@ -152,6 +208,7 @@ export async function fetchMultipleRepoStatsWithCache(
 
 /**
  * Fetch README with IndexedDB caching
+ * Falls back to stale cached data if API fails (rate limit, network error)
  */
 export async function fetchRepoReadmeWithCache(
   owner: string,
@@ -161,10 +218,11 @@ export async function fetchRepoReadmeWithCache(
   readme: ReadmeCache | null; 
   fromCache: boolean;
   error?: string;
+  isStale?: boolean;
 }> {
   const fullName = `${owner}/${repo}`;
   
-  // Try to get from cache first
+  // Try to get fresh cached data first
   if (!forceRefresh) {
     const cached = await getCachedReadme(fullName, true);
     if (cached) {
@@ -177,22 +235,50 @@ export async function fetchRepoReadmeWithCache(
           lastFetched: cached.lastFetched,
         },
         fromCache: true,
+        isStale: false,
       };
     }
   }
   
+  // Get stale cached data as fallback (don't check expiry)
+  const staleCached = await getCachedReadme(fullName, false);
+  
   // Fetch from API
   const result = await fetchRepoReadmeAPI(owner, repo);
   
-  // Cache the result
+  // If API fetch succeeded, cache and return fresh data
   if (result.readme) {
     await setCachedReadme(result.readme);
+    return {
+      readme: result.readme,
+      fromCache: false,
+      isStale: false,
+    };
   }
   
+  // API failed - fall back to stale cached data if available
+  if (result.error && staleCached) {
+    console.log(`[Cache] README API failed for ${fullName}, using stale cached data`);
+    return {
+      readme: {
+        fullName: staleCached.fullName,
+        readme_html: staleCached.readme_html,
+        readme_excerpt: staleCached.readme_excerpt,
+        image_url: staleCached.image_url,
+        lastFetched: staleCached.lastFetched,
+      },
+      fromCache: true,
+      error: result.error,
+      isStale: true,
+    };
+  }
+  
+  // No cached data available, return the error
   return {
     readme: result.readme,
     fromCache: false,
     error: result.error,
+    isStale: false,
   };
 }
 

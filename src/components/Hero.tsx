@@ -6,6 +6,7 @@ import { ArrowRight, Package, Cpu, Terminal, Star, GitFork, Zap, Database, Wifi,
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
+import { AnimatedCounter } from "./AnimatedCounter";
 
 interface HeroProps {
   stats?: {
@@ -133,7 +134,9 @@ export function Hero({ stats }: HeroProps) {
               >
                 <Package className="w-6 h-6 text-blue-500" />
                 <div className="text-left">
-                  <span className="text-2xl font-bold block">{stats.totalPackages}</span>
+                  <span className="text-2xl font-bold block">
+                    <AnimatedCounter value={stats.totalPackages} duration={2} />
+                  </span>
                   <span className="text-xs text-muted-foreground">Packages</span>
                 </div>
               </motion.div>
@@ -144,7 +147,9 @@ export function Hero({ stats }: HeroProps) {
               >
                 <Cpu className="w-6 h-6 text-green-500" />
                 <div className="text-left">
-                  <span className="text-2xl font-bold block">{stats.totalApplications}</span>
+                  <span className="text-2xl font-bold block">
+                    <AnimatedCounter value={stats.totalApplications} duration={2} />
+                  </span>
                   <span className="text-xs text-muted-foreground">Applications</span>
                 </div>
               </motion.div>
