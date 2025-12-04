@@ -27,7 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { Skeleton } from "./ui/skeleton";
 import { EmptyState } from "./SyncStatus";
-import { fetchRepoStats, fetchRepoReadme } from "@/lib/githubFetcher";
+import { fetchRepoStatsWithCache, fetchRepoReadmeWithCache, initializeCache } from "@/lib/cachedFetcher";
 import type { RegistryEntryWithCategory } from "@/lib/schemas";
 
 // Query client
@@ -69,21 +69,26 @@ function formatDate(dateStr: string | null | undefined): string {
 function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
   const fullName = `${owner}/${name}`;
 
-  // Fetch stats
+  // Initialize IndexedDB cache on mount
+  React.useEffect(() => {
+    initializeCache();
+  }, []);
+
+  // Fetch stats with IndexedDB caching
   const { data: statsResult, isLoading: statsLoading } = useQuery({
     queryKey: ["repoStats", fullName],
     queryFn: async () => {
-      const result = await fetchRepoStats(owner, name);
-      return { stats: result.stats, status: result.status };
+      const result = await fetchRepoStatsWithCache(owner, name);
+      return { stats: result.stats, status: result.status, fromCache: result.fromCache };
     },
     staleTime: 1000 * 60 * 60, // 1 hour
   });
 
-  // Fetch README
+  // Fetch README with IndexedDB caching
   const { data: readmeResult, isLoading: readmeLoading, refetch: refetchReadme } = useQuery({
     queryKey: ["repoReadme", fullName],
     queryFn: async () => {
-      const result = await fetchRepoReadme(owner, name);
+      const result = await fetchRepoReadmeWithCache(owner, name);
       return result.readme;
     },
     staleTime: 1000 * 60 * 60, // 1 hour

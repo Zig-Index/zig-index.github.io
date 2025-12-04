@@ -2,14 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Fuse from "fuse.js";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import {
-  fetchRepoStats,
-  fetchMultipleRepoStats,
-  fetchRepoReadme,
+  fetchRepoStatsWithCache,
+  fetchMultipleRepoStatsWithCache,
+  fetchRepoReadmeWithCache,
   checkRateLimit,
+  initializeCache,
   type RateLimitInfo,
-} from "@/lib/githubFetcher";
+} from "@/lib/cachedFetcher";
 import type { 
   RegistryEntryWithCategory, 
   CombinedRepoData, 
@@ -26,21 +27,34 @@ export const registryQueryKeys = {
   rateLimit: ["rateLimit"] as const,
 };
 
+// Initialize IndexedDB cache on first use
+let cacheInitialized = false;
+async function ensureCacheInitialized() {
+  if (typeof window === 'undefined' || cacheInitialized) return;
+  cacheInitialized = true;
+  await initializeCache();
+}
+
 // Hook: Fetch live stats for a single repo
-// Uses aggressive caching to minimize API calls
+// Uses IndexedDB cache with 1-hour expiry
 export function useRepoStats(owner: string, repo: string, enabled: boolean = true) {
+  // Initialize cache on mount
+  useEffect(() => {
+    ensureCacheInitialized();
+  }, []);
+
   return useQuery({
     queryKey: registryQueryKeys.stats(`${owner}/${repo}`),
     queryFn: async () => {
-      const result = await fetchRepoStats(owner, repo);
+      const result = await fetchRepoStatsWithCache(owner, repo);
       if (result.error && result.status !== "deleted") {
         throw new Error(result.error);
       }
-      return { stats: result.stats, status: result.status };
+      return { stats: result.stats, status: result.status, fromCache: result.fromCache };
     },
     enabled,
     staleTime: 1000 * 60 * 60, // 1 hour - refresh data hourly
-    gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in cache for a week
+    gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in React Query cache for a week
     retry: false, // Don't retry on rate limit errors
     refetchOnWindowFocus: false,
     refetchOnMount: false, // Don't refetch if data exists in cache
@@ -48,12 +62,12 @@ export function useRepoStats(owner: string, repo: string, enabled: boolean = tru
 }
 
 // Hook: Fetch README for a repo (only when enabled)
-// READMEs are cached for a long time since they change infrequently
+// Uses IndexedDB cache with 1-hour expiry
 export function useRepoReadme(owner: string, repo: string, enabled: boolean = false) {
   return useQuery({
     queryKey: registryQueryKeys.readme(`${owner}/${repo}`),
     queryFn: async () => {
-      const result = await fetchRepoReadme(owner, repo);
+      const result = await fetchRepoReadmeWithCache(owner, repo);
       if (result.error) {
         throw new Error(result.error);
       }
@@ -150,7 +164,7 @@ export function useFilteredRegistry(
 }
 
 // Hook: Combine registry entries with live stats
-// Fetches all repo details at once and caches aggressively for user reuse
+// Fetches all repo details at once using IndexedDB cache
 export function useRegistryWithStats(
   entries: RegistryEntryWithCategory[],
   fetchStats: boolean = true,
@@ -161,23 +175,35 @@ export function useRegistryWithStats(
   statsMap: Map<string, { stats: LiveStats | null; status: RepoStatus }>;
   error?: string;
 } {
+  // Initialize cache on mount
+  useEffect(() => {
+    ensureCacheInitialized();
+  }, []);
+
   // Generate a stable cache key based on all entry names
   const entriesKey = entries.map(e => e.fullName).sort().join(",");
   
-  // Batch fetch stats for all entries at once with aggressive caching
+  // Batch fetch stats for all entries at once with IndexedDB caching
   const { data: statsMap, isLoading, error, isError } = useQuery({
     queryKey: ["allRepoStats", entriesKey],
     queryFn: async () => {
       if (!fetchStats || entries.length === 0) {
         return new Map<string, { stats: LiveStats | null; status: RepoStatus }>();
       }
-      // Fetch all repos at once (not just visible ones)
+      // Fetch all repos at once - uses IndexedDB cache internally
       const repoList = entries.map(e => ({ owner: e.owner, repo: e.repo }));
-      return fetchMultipleRepoStats(repoList, 5); // Increased concurrency
+      const result = await fetchMultipleRepoStatsWithCache(repoList, 5);
+      
+      // Convert to expected Map format (without fromCache property)
+      const statsOnly = new Map<string, { stats: LiveStats | null; status: RepoStatus }>();
+      for (const [key, value] of result) {
+        statsOnly.set(key, { stats: value.stats, status: value.status });
+      }
+      return statsOnly;
     },
     enabled: fetchStats && entries.length > 0,
     staleTime: 1000 * 60 * 60, // 1 hour - refresh data hourly
-    gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in cache for a week
+    gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep in React Query cache for a week
     retry: false, // Don't retry on rate limit errors
     refetchOnWindowFocus: false, // Don't refetch when window refocuses
     refetchOnMount: false, // Don't refetch on component mount if data exists
