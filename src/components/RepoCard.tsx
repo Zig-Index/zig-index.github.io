@@ -147,7 +147,7 @@ export function RegistryCard({ entry, compact = false }: RegistryCardProps) {
               {entry.description || "No description available"}
             </CardDescription>
 
-            {/* Category Badge */}
+            {/* Category Badge - only show if exists */}
             {entry.category && !compact && (
               <div className="flex flex-wrap gap-1 mt-2 sm:mt-3">
                 <Badge variant="outline" className="text-xs">
@@ -156,9 +156,12 @@ export function RegistryCard({ entry, compact = false }: RegistryCardProps) {
               </div>
             )}
 
-            {/* Stats - push to bottom with mt-auto */}
+            {/* Spacer to push stats to bottom */}
+            <div className="flex-1" />
+
+            {/* Stats - always at bottom */}
             <div className={cn(
-              "flex items-center gap-3 sm:gap-4 text-muted-foreground mt-auto",
+              "flex items-center gap-3 sm:gap-4 text-muted-foreground",
               compact ? "mt-2 text-xs" : "mt-3 sm:mt-4 text-xs sm:text-sm"
             )}>
               {entry.stats ? (
@@ -308,7 +311,9 @@ export function RegistryCardSkeleton({ compact = false }: { compact?: boolean })
             <Skeleton className="h-4 sm:h-5 w-16 sm:w-20 rounded-full" />
           </div>
         )}
-        <div className={cn("flex gap-3 sm:gap-4 mt-auto", compact ? "mt-2" : "mt-3 sm:mt-4")}>
+        {/* Spacer to match real card layout */}
+        <div className="flex-1" />
+        <div className={cn("flex gap-3 sm:gap-4", compact ? "mt-2" : "mt-3 sm:mt-4")}>
           <Skeleton className="h-3 sm:h-4 w-8 sm:w-10 rounded" />
           <Skeleton className="h-3 sm:h-4 w-8 sm:w-10 rounded" />
           <Skeleton className="h-3 sm:h-4 w-8 sm:w-10 rounded" />
