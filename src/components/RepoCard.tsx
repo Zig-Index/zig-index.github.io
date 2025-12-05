@@ -288,28 +288,38 @@ export function RegistryCardSkeleton({ compact = false }: { compact?: boolean })
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 space-y-2">
             <div className="flex gap-1.5 sm:gap-2">
-              <Skeleton className="h-5 w-14 sm:w-16 rounded-full" />
-              <Skeleton className="h-5 w-10 sm:w-12 rounded-full" />
+              <Skeleton className="h-4 sm:h-5 w-12 sm:w-14 rounded-full" />
+              <Skeleton className="h-4 sm:h-5 w-8 sm:w-10 rounded-full" />
+              <Skeleton className="h-4 sm:h-5 w-10 sm:w-12 rounded-full" />
             </div>
             <Skeleton className={cn("h-5 sm:h-6 rounded", compact ? "w-28 sm:w-32" : "w-36 sm:w-48")} />
-            <Skeleton className="h-3 w-16 sm:w-20 rounded" />
+            <Skeleton className="h-3 sm:h-4 w-14 sm:w-18 rounded" />
           </div>
         </div>
       </CardHeader>
       <CardContent className={cn("flex-1", compact && "pb-2")}>
         <div className="space-y-2">
           <Skeleton className="h-3 sm:h-4 w-full rounded" />
-          <Skeleton className="h-3 sm:h-4 w-2/3 rounded" />
+          <Skeleton className="h-3 sm:h-4 w-3/4 sm:w-4/5 rounded" />
+          <Skeleton className="h-3 sm:h-4 w-1/2 sm:w-2/3 rounded" />
         </div>
+        {!compact && (
+          <div className="flex flex-wrap gap-1 mt-2 sm:mt-3">
+            <Skeleton className="h-4 sm:h-5 w-16 sm:w-20 rounded-full" />
+          </div>
+        )}
         <div className={cn("flex gap-3 sm:gap-4", compact ? "mt-2" : "mt-3 sm:mt-4")}>
-          <Skeleton className="h-3 sm:h-4 w-10 sm:w-12 rounded" />
-          <Skeleton className="h-3 sm:h-4 w-10 sm:w-12 rounded" />
-          <Skeleton className="h-3 sm:h-4 w-10 sm:w-12 rounded" />
+          <Skeleton className="h-3 sm:h-4 w-8 sm:w-10 rounded" />
+          <Skeleton className="h-3 sm:h-4 w-8 sm:w-10 rounded" />
+          <Skeleton className="h-3 sm:h-4 w-8 sm:w-10 rounded" />
+          {!compact && (
+            <Skeleton className="h-3 sm:h-4 w-16 sm:w-20 rounded ml-auto" />
+          )}
         </div>
       </CardContent>
       <CardFooter className={cn("pt-0 gap-2", compact && "pb-3")}>
         <Skeleton className="h-8 sm:h-9 flex-1 rounded-md" />
-        <Skeleton className="h-8 sm:h-9 w-8 sm:w-20 rounded-md" />
+        <Skeleton className="h-8 sm:h-9 w-20 sm:w-24 rounded-md" />
       </CardFooter>
     </Card>
   );

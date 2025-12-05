@@ -4,6 +4,8 @@ A curated registry for discovering Zig packages and applications.
 
 **[Live Site](https://zig-index.github.io)** · **[Add Your Project](https://zig-index.github.io/how-to-add)** · **[Registry](https://github.com/Zig-Index/registry)**
 
+> Your [Merged PRs](https://github.com/Zig-Index/registry/pulls) will appear on the live site within 30 minutes automatically!
+
 ## Features
 
 - 📦 **Curated Registry** - Quality-focused collection of Zig projects

@@ -35,18 +35,41 @@ function RepoPageSkeleton() {
             
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
               <div className="flex-1">
-                <Skeleton className="h-9 w-48 mb-2" />
-                <Skeleton className="h-5 w-24 mb-4" />
-                <Skeleton className="h-6 w-full max-w-xl mb-4" />
-                <div className="flex flex-wrap gap-2">
-                  <Skeleton className="h-6 w-20 rounded-full" />
-                  <Skeleton className="h-6 w-24 rounded-full" />
-                  <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-8 sm:h-9 w-40 sm:w-48 mb-2" />
+                <Skeleton className="h-4 sm:h-5 w-20 sm:w-24 mb-4" />
+                <Skeleton className="h-5 sm:h-6 w-full max-w-lg mb-4" />
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Skeleton className="h-5 sm:h-6 w-16 sm:w-20 rounded-full" />
+                  <Skeleton className="h-5 sm:h-6 w-20 sm:w-24 rounded-full" />
+                  <Skeleton className="h-5 sm:h-6 w-12 sm:w-16 rounded-full" />
+                </div>
+                {/* Installation commands skeleton */}
+                <div className="mb-4">
+                  <Skeleton className="h-3 sm:h-4 w-24 sm:w-32 mb-2" />
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2 sm:p-3 border">
+                      <Skeleton className="h-3 w-8 hidden sm:block" />
+                      <Skeleton className="h-3 sm:h-4 flex-1" />
+                      <Skeleton className="h-6 sm:h-7 w-6 sm:w-7 rounded" />
+                    </div>
+                    <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2 sm:p-3 border">
+                      <Skeleton className="h-3 w-8 hidden sm:block" />
+                      <Skeleton className="h-3 sm:h-4 flex-1" />
+                      <Skeleton className="h-6 sm:h-7 w-6 sm:w-7 rounded" />
+                    </div>
+                  </div>
+                </div>
+                {/* Badges skeleton */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Skeleton className="h-5 sm:h-6 w-16 sm:w-20 rounded-full" />
+                  <Skeleton className="h-5 sm:h-6 w-12 sm:w-16 rounded-full" />
+                  <Skeleton className="h-5 sm:h-6 w-18 sm:w-22 rounded-full" />
                 </div>
               </div>
               <div className="flex flex-wrap lg:flex-col gap-2">
-                <Skeleton className="h-10 w-36" />
-                <Skeleton className="h-10 w-28" />
+                <Skeleton className="h-9 sm:h-10 w-32 sm:w-36" />
+                <Skeleton className="h-9 sm:h-10 w-24 sm:w-28" />
+                <Skeleton className="h-9 sm:h-10 w-28 sm:w-32" />
               </div>
             </div>
           </div>
@@ -64,20 +87,21 @@ function RepoPageSkeleton() {
                     <Skeleton className="h-6 w-20" />
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <Skeleton className="h-8 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6" />
-                  <Skeleton className="h-32 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
+                <CardContent className="space-y-3 sm:space-y-4">
+                  <Skeleton className="h-5 sm:h-6 w-2/3 sm:w-3/4" />
+                  <Skeleton className="h-3 sm:h-4 w-full" />
+                  <Skeleton className="h-3 sm:h-4 w-full" />
+                  <Skeleton className="h-3 sm:h-4 w-1/2 sm:w-2/3" />
+                  <Skeleton className="h-24 sm:h-32 w-full" />
+                  <Skeleton className="h-3 sm:h-4 w-full" />
+                  <Skeleton className="h-3 sm:h-4 w-4/5 sm:w-5/6" />
                 </CardContent>
               </Card>
             </div>
             
             {/* Sidebar skeleton */}
             <div className="space-y-6">
+              {/* Stats Card */}
               <Card>
                 <CardHeader>
                   <Skeleton className="h-6 w-24" />
@@ -85,45 +109,90 @@ function RepoPageSkeleton() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-5 w-12" />
+                    <Skeleton className="h-4 sm:h-5 w-10 sm:w-12" />
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
                     <Skeleton className="h-4 w-14" />
-                    <Skeleton className="h-5 w-12" />
+                    <Skeleton className="h-4 sm:h-5 w-10 sm:w-12" />
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
                     <Skeleton className="h-4 w-18" />
-                    <Skeleton className="h-5 w-12" />
+                    <Skeleton className="h-4 sm:h-5 w-10 sm:w-12" />
                   </div>
                 </CardContent>
               </Card>
               
+              {/* Details Card */}
               <Card>
                 <CardHeader>
                   <Skeleton className="h-6 w-20" />
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 sm:space-y-4">
                   <div className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-3 sm:h-4 w-16 sm:w-20" />
+                    <Skeleton className="h-5 sm:h-6 w-14 sm:w-16 rounded-full" />
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 sm:h-4 w-14 sm:w-16" />
+                    <Skeleton className="h-3 sm:h-4 w-20 sm:w-24" />
+                  </div>
+                  <Separator />
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-3 sm:h-4 w-16 sm:w-20" />
+                    <Skeleton className="h-3 sm:h-4 w-24 sm:w-28" />
                   </div>
                 </CardContent>
               </Card>
               
+              {/* Links Card */}
               <Card>
                 <CardHeader>
                   <Skeleton className="h-6 w-16" />
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
+                <CardContent className="space-y-2">
+                  <Skeleton className="h-9 sm:h-10 w-full" />
+                  <Skeleton className="h-9 sm:h-10 w-full" />
+                  <Skeleton className="h-9 sm:h-10 w-full" />
+                  <Skeleton className="h-9 sm:h-10 w-full" />
+                  <Skeleton className="h-9 sm:h-10 w-full" />
+                </CardContent>
+              </Card>
+
+              {/* Versions Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-5 w-8 rounded-full ml-auto" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Dependencies Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-6 w-24" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 sm:h-5 w-full" />
+                    <Skeleton className="h-4 sm:h-5 w-2/3 sm:w-3/4" />
+                    <Skeleton className="h-4 sm:h-5 w-1/2 sm:w-2/3" />
+                  </div>
                 </CardContent>
               </Card>
             </div>
