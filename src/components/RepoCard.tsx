@@ -139,7 +139,7 @@ export function RegistryCard({ entry, compact = false }: RegistryCardProps) {
             </div>
           </CardHeader>
 
-          <CardContent className={cn("flex-1", compact && "pb-2")}>
+          <CardContent className={cn("flex-1 flex flex-col", compact && "pb-2")}>
             <CardDescription className={cn(
               "line-clamp-2",
               compact ? "text-xs" : "text-xs sm:text-sm"
@@ -156,77 +156,77 @@ export function RegistryCard({ entry, compact = false }: RegistryCardProps) {
               </div>
             )}
 
-          {/* Stats */}
-          <div className={cn(
-            "flex items-center gap-3 sm:gap-4 text-muted-foreground",
-            compact ? "mt-2 text-xs" : "mt-3 sm:mt-4 text-xs sm:text-sm"
-          )}>
-            {entry.stats ? (
-              <>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="flex items-center gap-1">
-                        <Star className="w-3 h-3 sm:w-4 sm:h-4" />
-                        {formatNumber(stars)}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Stars</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="flex items-center gap-1">
-                        <GitFork className="w-3 h-3 sm:w-4 sm:h-4" />
-                        {formatNumber(forks)}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Forks</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
-                        {formatNumber(watchers)}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Watchers</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                {!compact && lastUpdated && (
+            {/* Stats - push to bottom with mt-auto */}
+            <div className={cn(
+              "flex items-center gap-3 sm:gap-4 text-muted-foreground mt-auto",
+              compact ? "mt-2 text-xs" : "mt-3 sm:mt-4 text-xs sm:text-sm"
+            )}>
+              {entry.stats ? (
+                <>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="flex items-center gap-1 ml-auto text-xs">
-                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span className="hidden sm:inline">{formatDate(lastUpdated)}</span>
+                        <span className="flex items-center gap-1">
+                          <Star className="w-3 h-3 sm:w-4 sm:h-4" />
+                          {formatNumber(stars)}
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent>Last updated: {formatDate(lastUpdated)}</TooltipContent>
+                      <TooltipContent>Stars</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                )}
-              </>
-            ) : (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Star className="w-3 h-3" />
-                  —
-                </span>
-                <span className="flex items-center gap-1">
-                  <GitFork className="w-3 h-3" />
-                  —
-                </span>
-              </div>
-            )}
-          </div>
-        </CardContent>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1">
+                          <GitFork className="w-3 h-3 sm:w-4 sm:h-4" />
+                          {formatNumber(forks)}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>Forks</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1">
+                          <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                          {formatNumber(watchers)}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>Watchers</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  {!compact && lastUpdated && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1 ml-auto text-xs">
+                            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline">{formatDate(lastUpdated)}</span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Last updated: {formatDate(lastUpdated)}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Star className="w-3 h-3" />
+                    —
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <GitFork className="w-3 h-3" />
+                    —
+                  </span>
+                </div>
+              )}
+            </div>
+          </CardContent>
 
         <CardFooter className={cn(
           "pt-0 gap-2",
@@ -297,7 +297,7 @@ export function RegistryCardSkeleton({ compact = false }: { compact?: boolean })
           </div>
         </div>
       </CardHeader>
-      <CardContent className={cn("flex-1", compact && "pb-2")}>
+      <CardContent className={cn("flex-1 flex flex-col", compact && "pb-2")}>
         <div className="space-y-2">
           <Skeleton className="h-3 sm:h-4 w-full rounded" />
           <Skeleton className="h-3 sm:h-4 w-3/4 sm:w-4/5 rounded" />
@@ -308,7 +308,7 @@ export function RegistryCardSkeleton({ compact = false }: { compact?: boolean })
             <Skeleton className="h-4 sm:h-5 w-16 sm:w-20 rounded-full" />
           </div>
         )}
-        <div className={cn("flex gap-3 sm:gap-4", compact ? "mt-2" : "mt-3 sm:mt-4")}>
+        <div className={cn("flex gap-3 sm:gap-4 mt-auto", compact ? "mt-2" : "mt-3 sm:mt-4")}>
           <Skeleton className="h-3 sm:h-4 w-8 sm:w-10 rounded" />
           <Skeleton className="h-3 sm:h-4 w-8 sm:w-10 rounded" />
           <Skeleton className="h-3 sm:h-4 w-8 sm:w-10 rounded" />
