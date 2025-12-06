@@ -53,7 +53,10 @@ export function SignInDialog({
     const intervalId = setInterval(async () => {
       try {
         // Use proxy in dev, direct in prod (requires CORS proxy in prod)
-        const baseUrl = import.meta.env.DEV ? "/api/github" : "https://github.com";
+        // Using corsproxy.io to bypass CORS on GitHub Pages
+        const baseUrl = import.meta.env.DEV 
+          ? "/api/github" 
+          : "https://corsproxy.io/?https://github.com";
         
         const response = await fetch(`${baseUrl}/login/oauth/access_token`, {
           method: "POST",
@@ -125,7 +128,10 @@ export function SignInDialog({
     setIsLoading(true);
     try {
       // Use proxy in dev, direct in prod (requires CORS proxy in prod)
-      const baseUrl = import.meta.env.DEV ? "/api/github" : "https://github.com";
+      // Using corsproxy.io to bypass CORS on GitHub Pages
+      const baseUrl = import.meta.env.DEV 
+        ? "/api/github" 
+        : "https://corsproxy.io/?https://github.com";
       
       const response = await fetch(`${baseUrl}/login/device/code`, {
         method: "POST",
