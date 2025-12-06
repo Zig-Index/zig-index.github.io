@@ -8,6 +8,8 @@ An automated indexing registry for discovering Zig projects.
 
 **Zig Index is an independent and unofficial registry of Zig projects. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All projects listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. I do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.**
 
+
+
 ## Features
 
 - 📦 **Automated Registry** - Automatic fetching based on GitHub tags
@@ -24,16 +26,6 @@ This is the main website repository. The registry data is maintained separately:
 
 - **Website**: https://github.com/Zig-Index/zig-index.github.io (this repo)
 - **Registry**: https://github.com/Zig-Index/registry (submodule at `src/registry`)
-
-## Add Your Project
-
-To add your project to Zig Index:
-
-1. Fork the [registry repository](https://github.com/Zig-Index/registry)
-2. Create a JSON file in `database/username/repo-name.json`
-3. Submit a Pull Request
-
-See the [registry README](https://github.com/Zig-Index/registry) for details.
 
 
 ## Development
