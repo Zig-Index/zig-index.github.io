@@ -17,6 +17,7 @@ import {
   fetchRepoZon as fetchRepoZonAPI,
   fetchUserProfile as fetchUserProfileAPI,
   fetchRepoIssues as fetchRepoIssuesAPI,
+  fetchRepoCommits as fetchRepoCommitsAPI,
   generateZigFetchCommand,
   generateZigFetchUrl,
   checkRateLimit,
@@ -43,6 +44,8 @@ import {
   setCachedUser,
   getCachedIssues,
   setCachedIssues,
+  getCachedCommits,
+  setCachedCommits,
   isCacheFresh,
   getReposNeedingRefresh,
   clearExpiredCache,
@@ -52,9 +55,10 @@ import {
   type CachedZon,
   type CachedUser,
   type CachedIssues,
+  type CachedCommits,
 } from './idb-cache';
 
-import type { LiveStats, RepoStatus, RepoVersion, UserProfile, RepoIssuesInfo } from './schemas';
+import type { LiveStats, RepoStatus, RepoVersion, UserProfile, RepoIssuesInfo, CommitInfo } from './schemas';
 
 // ============================================
 // Cached Fetch Functions
@@ -595,6 +599,75 @@ export async function fetchRepoIssuesWithCache(
   // No cached data available, return the error
   return {
     issues: result.issues,
+    fromCache: false,
+    error: result.error,
+    isStale: false,
+  };
+}
+
+/**
+ * Fetch repo commits with IndexedDB caching
+ * Falls back to stale cached data if API fails
+ */
+export async function fetchRepoCommitsWithCache(
+  owner: string,
+  repo: string,
+  limit: number = 100,
+  forceRefresh: boolean = false
+): Promise<{ 
+  commits: CommitInfo[] | null; 
+  fromCache: boolean;
+  error?: string;
+  isStale?: boolean;
+}> {
+  const fullName = `${owner}/${repo}`;
+  
+  // Try to get fresh cached data first
+  if (!forceRefresh) {
+    const cached = await getCachedCommits(fullName, true);
+    if (cached) {
+      return {
+        commits: cached.commits,
+        fromCache: true,
+        isStale: false,
+      };
+    }
+  }
+  
+  // Get stale cached data as fallback (don't check expiry)
+  const staleCached = await getCachedCommits(fullName, false);
+  
+  // Fetch from API
+  const result = await fetchRepoCommitsAPI(owner, repo, limit);
+  
+  // If API fetch succeeded, cache and return fresh data
+  if (result.commits) {
+    await setCachedCommits({
+      fullName,
+      commits: result.commits,
+      lastFetched: Date.now(),
+    });
+    return {
+      commits: result.commits,
+      fromCache: false,
+      isStale: false,
+    };
+  }
+  
+  // API failed - fall back to stale cached data if available
+  if (result.error && staleCached) {
+    console.log(`[Cache] Commits API failed for ${fullName}, using stale cached data`);
+    return {
+      commits: staleCached.commits,
+      fromCache: true,
+      error: result.error,
+      isStale: true,
+    };
+  }
+  
+  // No cached data available, return the error
+  return {
+    commits: null,
     fromCache: false,
     error: result.error,
     isStale: false,

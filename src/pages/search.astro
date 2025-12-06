@@ -32,15 +32,16 @@ const searchItems = [
   })),
 ];
 
-const siteUrl = "https://zig-index.github.io";
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://zig-index.github.io";
+const siteName = import.meta.env.PUBLIC_SITE_NAME || "Zig Index";
 
 // Generate comprehensive SEO meta tags
 const pageTitle = query 
-  ? `Search "${query}" - Zig Packages & Applications | Zig Index` 
-  : "Search Zig Packages & Applications - Find Libraries, Tools & Software | Zig Index";
+  ? `Search "${query}" - Zig Packages & Applications | ${siteName}` 
+  : `Search Zig Packages & Applications - Find Libraries, Tools & Software | ${siteName}`;
 
 const pageDescription = query
-  ? `Search results for "${query}" in Zig Index. Discover ${searchItems.length}+ Zig packages, libraries, tools, and applications. Find the best Zig ecosystem resources for your projects.`
+  ? `Search results for "${query}" in ${siteName}. Discover ${searchItems.length}+ Zig packages, libraries, tools, and applications. Find the best Zig ecosystem resources for your projects.`
   : `Search ${searchItems.length}+ Zig packages, libraries, and applications. Find the perfect tools, modules, and software for your Zig programming projects. Unofficial, community-driven Zig package index.`;
 
 // Generate keywords dynamically from search items

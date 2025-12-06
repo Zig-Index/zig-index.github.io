@@ -7,21 +7,22 @@ import { loadRegistryData, getRegistryStats } from "../lib/registryLoader";
 const allEntries = await loadRegistryData();
 const stats = getRegistryStats(allEntries);
 
-const siteUrl = "https://zig-index.github.io";
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://zig-index.github.io";
+const siteName = import.meta.env.PUBLIC_SITE_NAME || "Zig Index";
 
 // FAQ items for SEO
 const faqItems = [
   {
-    question: "What is Zig Index?",
-    answer: "Zig Index is an independent, community-driven index for discovering Zig packages, libraries, and applications. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation. It helps developers find quality tools and modules for the Zig programming language ecosystem."
+    question: `What is ${siteName}?`,
+    answer: `${siteName} is an independent, community-driven index for discovering Zig packages, libraries, and applications. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation. It helps developers find quality tools and modules for the Zig programming language ecosystem.`
   },
   {
-    question: "How do I add my Zig project to Zig Index?",
+    question: `How do I add my Zig project to ${siteName}?`,
     answer: "You can add your project by submitting a Pull Request to our GitHub registry repository. Create a JSON file with your project details in the appropriate folder (packages or applications) and submit it for review."
   },
   {
-    question: "Is Zig Index free to use?",
-    answer: "Yes, Zig Index is completely free and open source. All data is fetched from GitHub and displayed client-side for fast, privacy-respecting browsing."
+    question: `Is ${siteName} free to use?`,
+    answer: `Yes, ${siteName} is completely free and open source. All data is fetched from GitHub and displayed client-side for fast, privacy-respecting browsing.`
   },
   {
     question: "What's the difference between packages and applications?",
@@ -32,8 +33,8 @@ const faqItems = [
     answer: "The registry is updated through community contributions via Pull Requests. Live statistics like stars and forks are fetched directly from GitHub when you browse the site."
   },
   {
-    question: "Can I contribute to Zig Index?",
-    answer: "Absolutely! Zig Index is open source. You can contribute by adding packages, reporting issues, or improving the website code on our GitHub repository."
+    question: `Can I contribute to ${siteName}?`,
+    answer: `Absolutely! ${siteName} is open source. You can contribute by adding packages, reporting issues, or improving the website code on our GitHub repository.`
   }
 ];
 
@@ -42,7 +43,7 @@ const schema = {
   "@graph": [
     {
       "@type": "WebSite",
-      "name": "Zig Index",
+      "name": siteName,
       "url": siteUrl,
       "description": "An unofficial, community-driven index for discovering Zig packages, libraries, and applications. Not affiliated with the Zig Software Foundation.",
       "potentialAction": {

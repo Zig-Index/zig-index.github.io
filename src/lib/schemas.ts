@@ -24,6 +24,16 @@ export type RegistryEntryWithCategory = RegistryEntry & {
   htmlUrl: string;
 };
 
+export interface SearchItem {
+  name: string;
+  owner: string;
+  repo: string;
+  description: string;
+  category?: string;
+  type: "package" | "application";
+  fullName: string;
+}
+
 // ============================================
 // Live Stats Schema (fetched on-demand from GitHub API)
 // ============================================
@@ -45,6 +55,19 @@ export const LiveStatsSchema = z.object({
 });
 
 export type LiveStats = z.infer<typeof LiveStatsSchema>;
+
+export interface CommitInfo {
+  sha: string;
+  message: string;
+  author: {
+    name: string;
+    email: string;
+    date: string;
+    avatarUrl?: string;
+    login?: string;
+  };
+  url: string;
+}
 
 // ============================================
 // Combined Repo Data (Registry + Live Stats)

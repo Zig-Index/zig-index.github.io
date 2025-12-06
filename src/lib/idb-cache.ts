@@ -12,7 +12,7 @@
  */
 
 import Dexie, { type Table } from 'dexie';
-import type { LiveStats, RepoStatus, RepoVersion, ZigDependency, UserProfile, RepoIssuesInfo } from './schemas';
+import type { LiveStats, RepoStatus, RepoVersion, ZigDependency, UserProfile, RepoIssuesInfo, CommitInfo } from './schemas';
 import type { ReadmeCache, ReleasesCache, ZonCache } from './githubFetcher';
 
 // Cache expiry time: 1 hour in milliseconds
@@ -76,6 +76,12 @@ export interface CachedIssues {
   lastFetched: number; // Unix timestamp
 }
 
+export interface CachedCommits {
+  fullName: string; // Primary key: "owner/repo"
+  commits: CommitInfo[];
+  lastFetched: number; // Unix timestamp
+}
+
 // ============================================
 // Dexie Database Class
 // ============================================
@@ -87,6 +93,7 @@ class ZigIndexDB extends Dexie {
   zonCache!: Table<CachedZon, string>;
   userCache!: Table<CachedUser, string>;
   issuesCache!: Table<CachedIssues, string>;
+  commitsCache!: Table<CachedCommits, string>;
   metadata!: Table<CacheMetadata, string>;
 
   constructor() {
@@ -125,6 +132,18 @@ class ZigIndexDB extends Dexie {
       zonCache: 'fullName, lastFetched',
       userCache: 'login, lastFetched',
       issuesCache: 'fullName, lastFetched',
+      metadata: 'key, updatedAt',
+    });
+
+    // Version 5: Add commits cache
+    this.version(5).stores({
+      repoStats: 'fullName, lastFetched, lastUpdated, status',
+      readmeCache: 'fullName, lastFetched',
+      releasesCache: 'fullName, lastFetched',
+      zonCache: 'fullName, lastFetched',
+      userCache: 'login, lastFetched',
+      issuesCache: 'fullName, lastFetched',
+      commitsCache: 'fullName, lastFetched',
       metadata: 'key, updatedAt',
     });
   }
@@ -540,6 +559,43 @@ export async function setCachedIssues(issues: CachedIssues): Promise<void> {
   }
 }
 
+/**
+ * Get cached commits for a repo
+ */
+export async function getCachedCommits(fullName: string, checkExpiry = true): Promise<CachedCommits | null> {
+  const database = getDB();
+  if (!database) return null;
+  
+  try {
+    const cached = await database.commitsCache.get(fullName);
+    
+    if (!cached) return null;
+    
+    if (checkExpiry && !isCacheFresh(cached.lastFetched)) {
+      return null;
+    }
+    
+    return cached;
+  } catch (error) {
+    console.warn('[IDB Cache] Error getting cached commits:', error);
+    return null;
+  }
+}
+
+/**
+ * Save or update commits in cache (upsert)
+ */
+export async function setCachedCommits(commits: CachedCommits): Promise<void> {
+  const database = getDB();
+  if (!database) return;
+  
+  try {
+    await database.commitsCache.put(commits);
+  } catch (error) {
+    console.warn('[IDB Cache] Error saving cached commits:', error);
+  }
+}
+
 // ============================================
 // Metadata Operations
 // ============================================
@@ -797,6 +853,8 @@ export default {
   setCachedUser,
   getCachedIssues,
   setCachedIssues,
+  getCachedCommits,
+  setCachedCommits,
   getMetadata,
   setMetadata,
   clearAllCache,

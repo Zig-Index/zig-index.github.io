@@ -12,99 +12,36 @@ import {
   type ZigDependency,
   type ZonInfo,
   type UserProfile,
-  type RepoIssuesInfo
+  type RepoIssuesInfo,
+  type CommitInfo
 } from "./schemas";
-import { marked } from "marked";
-import { markedHighlight } from "marked-highlight";
-import hljs from "highlight.js";
+import MarkdownIt from "markdown-it";
+import Shiki from "@shikijs/markdown-it";
+import zig from "@shikijs/langs/zig";
 import DOMPurify from "dompurify";
 
-// Register Zig language for highlight.js
-// Based on Zig syntax - keywords, types, built-ins, and operators
-hljs.registerLanguage('zig', function(hljs) {
-  const KEYWORDS = {
-    keyword: 'addrspace align allowzero and anyframe anytype asm async await break ' +
-      'callconv catch comptime const continue defer else enum errdefer error export extern ' +
-      'fn for if inline linksection noalias noinline nosuspend null opaque or orelse packed ' +
-      'pub resume return struct suspend switch test threadlocal try undefined union unreachable ' +
-      'var volatile while',
-    literal: 'true false null undefined',
-    built_in: '@addWithOverflow @alignCast @alignOf @as @asyncCall @atomicLoad @atomicRmw ' +
-      '@atomicStore @bitCast @bitOffsetOf @bitReverse @bitSizeOf @boolToInt @breakpoint ' +
-      '@byteSwap @call @cDefine @cImport @cInclude @clz @cmpxchgStrong @cmpxchgWeak ' +
-      '@compileError @compileLog @ctz @divExact @divFloor @divTrunc @embedFile @enumToInt ' +
-      '@errSetCast @errorName @errorReturnTrace @errorToInt @export @extern @fence @field ' +
-      '@fieldParentPtr @floatCast @floatToInt @frame @Frame @frameAddress @frameSize ' +
-      '@hasDecl @hasField @import @intCast @intToEnum @intToError @intToFloat @intToPtr ' +
-      '@max @memcpy @memset @min @mod @mulAdd @mulWithOverflow @offsetOf @panic @popCount ' +
-      '@prefetch @ptrCast @ptrToInt @reduce @rem @returnAddress @select @setAlignStack ' +
-      '@setCold @setEvalBranchQuota @setFloatMode @setRuntimeSafety @shlExact @shlWithOverflow ' +
-      '@shrExact @shuffle @sizeOf @splat @sqrt @src @subWithOverflow @tagName @This ' +
-      '@trap @truncate @Type @typeInfo @typeName @TypeOf @unionInit @Vector @wasmMemoryGrow ' +
-      '@wasmMemorySize'
-  };
-  
-  const TYPES = {
-    type: 'i8 i16 i32 i64 i128 isize u8 u16 u32 u64 u128 usize f16 f32 f64 f80 f128 ' +
-      'bool void noreturn anyerror anyopaque c_char c_short c_ushort c_int c_uint c_long ' +
-      'c_ulong c_longlong c_ulonglong c_longdouble comptime_int comptime_float type'
-  };
+let mdParser: MarkdownIt | null = null;
 
-  return {
-    name: 'Zig',
-    aliases: ['zig'],
-    keywords: Object.assign({}, KEYWORDS, TYPES),
-    contains: [
-      hljs.C_LINE_COMMENT_MODE,
-      hljs.COMMENT('/\\*', '\\*/', { contains: ['self'] }),
-      {
-        className: 'string',
-        variants: [
-          { begin: '"', end: '"', contains: [{ begin: '\\\\.' }] },
-          { begin: "'", end: "'" }
-        ]
-      },
-      {
-        className: 'number',
-        variants: [
-          { begin: '\\b0x[0-9a-fA-F_]+' },
-          { begin: '\\b0o[0-7_]+' },
-          { begin: '\\b0b[01_]+' },
-          { begin: '\\b[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?' }
-        ]
-      },
-      {
-        className: 'function',
-        beginKeywords: 'fn',
-        end: '\\(',
-        excludeEnd: true,
-        contains: [hljs.UNDERSCORE_TITLE_MODE]
-      },
-      {
-        className: 'meta',
-        begin: '@[a-zA-Z_]\\w*'
-      }
-    ]
-  };
-});
-
-// Configure marked with syntax highlighting
-marked.use(markedHighlight({
-  langPrefix: 'hljs language-',
-  highlight(code, lang) {
-    // Normalize language name
-    const normalizedLang = lang?.toLowerCase() || 'plaintext';
+async function getMarkdownParser() {
+  if (!mdParser) {
+    mdParser = MarkdownIt({
+      html: true,
+      breaks: true,
+      linkify: true,
+    });
     
-    // Check if language exists in hljs
-    const language = hljs.getLanguage(normalizedLang) ? normalizedLang : 'plaintext';
-    
-    try {
-      return hljs.highlight(code, { language }).value;
-    } catch {
-      return code;
-    }
+    mdParser.use(await Shiki({
+      themes: {
+        light: 'github-light',
+        dark: 'github-dark',
+      },
+      langs: [zig, 'c', 'cpp', 'rust', 'go', 'javascript', 'typescript', 'json', 'bash', 'shell', 'yaml', 'toml', 'markdown', 'html', 'css'],
+    }));
   }
-}));
+  return mdParser;
+}
+
+
 
 // GitHub API base URL
 const GITHUB_API_BASE = "https://api.github.com";
@@ -191,19 +128,20 @@ function getAuthHeaders(): Record<string, string> {
     "Accept": "application/vnd.github.v3+json",
   };
   
-  // First check environment variables (build-time or SSR)
-  // Check both GITHUB_TOKEN and GH_TOKEN for flexibility
-  const envToken = import.meta.env.GITHUB_TOKEN || import.meta.env.GH_TOKEN;
-  if (envToken) {
-    headers["Authorization"] = `Bearer ${envToken}`;
-    return headers;
-  }
-  
-  // Fallback: Check localStorage for user-provided token (client-side only)
+  // Check localStorage for user-provided token (client-side only)
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("github_token");
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    try {
+      // Try to get token from zustand store
+      const storage = localStorage.getItem("zig-index-auth");
+      if (storage) {
+        const parsed = JSON.parse(storage);
+        const token = parsed.state?.token;
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+      }
+    } catch (e) {
+      // Ignore parsing errors
     }
   }
   
@@ -345,10 +283,8 @@ export async function fetchRepoReadme(
     const markdown = await response.text();
     
     // Convert markdown to HTML
-    const rawHtml = await marked(markdown, {
-      gfm: true,
-      breaks: true,
-    });
+    const parser = await getMarkdownParser();
+    const rawHtml = parser.render(markdown);
     
     // Sanitize HTML
     const readme_html = DOMPurify.sanitize(rawHtml, {
@@ -796,7 +732,8 @@ export async function fetchUserProfile(
       );
       if (readmeResponse.ok) {
         const readmeContent = await readmeResponse.text();
-        const html = await marked(readmeContent);
+        const parser = await getMarkdownParser();
+        const html = parser.render(readmeContent);
         readmeHtml = typeof window !== 'undefined' ? DOMPurify.sanitize(html) : html;
       }
     } catch {
@@ -900,5 +837,61 @@ export async function fetchRepoIssues(
     };
   } catch (error) {
     return { issues: null, error: String(error) };
+  }
+}
+
+/**
+ * Fetch repository commits
+ */
+export async function fetchRepoCommits(
+  owner: string,
+  repo: string,
+  limit = 100
+): Promise<{ commits: CommitInfo[] | null; error?: string }> {
+  // Check global rate limit before making request
+  if (isRateLimited()) {
+    return { commits: null, error: getRateLimitError() };
+  }
+  
+  const headers = getAuthHeaders();
+  
+  try {
+    const response = await fetch(
+      `${GITHUB_API_BASE}/repos/${owner}/${repo}/commits?per_page=${limit}`,
+      { headers }
+    );
+    
+    if (response.status === 403) {
+      const rateLimit = parseRateLimitHeaders(response.headers);
+      updateRateLimitState(rateLimit, true);
+      return { commits: null, error: getRateLimitError() };
+    }
+    
+    if (!response.ok) {
+      return { commits: null, error: `Failed to fetch commits: ${response.statusText}` };
+    }
+    
+    const data = await response.json();
+    
+    if (!Array.isArray(data)) {
+      return { commits: [], error: undefined };
+    }
+    
+    const commits: CommitInfo[] = data.map((item: any) => ({
+      sha: item.sha,
+      message: item.commit.message,
+      author: {
+        name: item.commit.author.name,
+        email: item.commit.author.email,
+        date: item.commit.author.date,
+        avatarUrl: item.author?.avatar_url,
+        login: item.author?.login,
+      },
+      url: item.html_url,
+    }));
+    
+    return { commits };
+  } catch (error) {
+    return { commits: null, error: String(error) };
   }
 }

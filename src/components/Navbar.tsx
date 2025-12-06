@@ -27,16 +27,20 @@ import {
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
 import Fuse from "fuse.js";
-
-interface SearchItem {
-  name: string;
-  owner: string;
-  repo: string;
-  description: string;
-  category?: string;
-  type: "package" | "application";
-  fullName: string;
-}
+import { useNavbarStore } from "@/stores/useAppStore";
+import type { SearchItem } from "@/lib/schemas";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { SignInDialog } from "./SignInDialog";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { LogOut, User } from "lucide-react";
 
 interface NavbarProps {
   onSearch?: (query: string) => void;
@@ -53,23 +57,29 @@ const navLinks = [
   { href: "/applications", label: "Applications", icon: Cpu },
 ];
 
+// Default empty array to prevent re-renders
+const DEFAULT_SEARCH_ITEMS: SearchItem[] = [];
+
 export function Navbar({ 
   onSearch, 
   searchValue, 
-  searchItems = [],
+  searchItems = DEFAULT_SEARCH_ITEMS,
   isFilterMode = false,
   pageType = "all"
 }: NavbarProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [showSuggestions, setShowSuggestions] = React.useState(false);
-  const [suggestions, setSuggestions] = React.useState<SearchItem[]>([]);
-  const [typeFilter, setTypeFilter] = React.useState<"all" | "package" | "application">("all");
+  const {
+    isOpen, setIsOpen,
+    showSuggestions, setShowSuggestions,
+    suggestions, setSuggestions,
+    typeFilter, setTypeFilter,
+    localSearch, setLocalSearch
+  } = useNavbarStore();
+
+  const { user, isAuthenticated, logout, showSignInDialog, setShowSignInDialog } = useAuthStore();
+
   const searchRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   
-  // Navbar always has its own local search state - it's a global search that navigates to search page
-  const [localSearch, setLocalSearch] = React.useState("");
-
   // Build search index
   const fuse = React.useMemo(() => {
     if (!searchItems || searchItems.length === 0) return null;
@@ -104,8 +114,18 @@ export function Navbar({
     }
     
     // Limit to 12 suggestions
-    setSuggestions(itemsToShow.slice(0, 12));
-  }, [localSearch, fuse, searchItems, typeFilter]);
+    const newSuggestions = itemsToShow.slice(0, 12);
+    
+    // Only update if suggestions actually changed to prevent loops
+    // Simple length check + first/last item check for performance
+    // or just rely on Zustand's equality check if we passed a selector, but here we set it.
+    // We can check if JSON stringify matches but that's expensive.
+    // Instead, we rely on the fact that if dependencies haven't changed, this effect won't run.
+    // The issue before was searchItems changing on every render.
+    // Now we use DEFAULT_SEARCH_ITEMS.
+    
+    setSuggestions(newSuggestions);
+  }, [localSearch, fuse, searchItems, typeFilter, setSuggestions]);
 
   // Close suggestions when clicking outside
   React.useEffect(() => {
@@ -116,7 +136,7 @@ export function Navbar({
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [setShowSuggestions]);
 
   // Navigate to search page on submit
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -147,7 +167,7 @@ export function Navbar({
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto flex h-16 items-center px-4">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2 mr-6 shrink-0" title="Zig Index - Home">
+        <a href="/" className="flex items-center gap-2 mr-6 shrink-0" title={`${import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} - Home`}>
           <motion.div 
             whileHover={{ scale: 1.1, rotate: 5 }}
             whileTap={{ scale: 0.95 }}
@@ -156,7 +176,7 @@ export function Navbar({
             <Zap className="w-5 h-5 text-primary-foreground" />
           </motion.div>
           <span className="font-bold text-xl hidden sm:block bg-linear-to-r from-foreground to-foreground/70 bg-clip-text">
-            Zig Index
+            {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"}
           </span>
         </a>
 
@@ -365,16 +385,55 @@ export function Navbar({
             </a>
           </Button>
 
-          <Button variant="ghost" size="icon" asChild className="hidden sm:flex" title="View Zig Index on GitHub">
+          <Button variant="ghost" size="icon" asChild className="hidden sm:flex" title={`View ${import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} on GitHub`}>
             <a 
-              href="https://github.com/Zig-Index/zig-index.github.io" 
+              href={import.meta.env.PUBLIC_REPO_URL || "https://github.com/Zig-Index/zig-index.github.io"}
               target="_blank" 
               rel="noopener noreferrer"
-              aria-label="View Zig Index source code on GitHub"
+              aria-label={`View ${import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} source code on GitHub`}
             >
               <Github className="w-4 h-4" />
             </a>
           </Button>
+
+          {/* Auth Button - Desktop */}
+          {isAuthenticated && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 p-0 border border-border/50 hidden sm:flex">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={user.avatar_url} alt={user.login} />
+                    <AvatarFallback>{user.login.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.name || user.login}</p>
+                    <p className="text-xs leading-none text-muted-foreground">@{user.login}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout} className="text-red-600 dark:text-red-400 cursor-pointer">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowSignInDialog(true)}
+              className="hidden sm:flex gap-2"
+            >
+              <Github className="w-4 h-4" />
+              Sign In
+            </Button>
+          )}
+          
+          <SignInDialog open={showSignInDialog} onOpenChange={setShowSignInDialog} />
 
           {/* Mobile Menu */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -393,7 +452,7 @@ export function Navbar({
                 <div className="flex items-center justify-center w-10 h-10 bg-linear-to-br from-primary to-primary/70 rounded-lg shadow-lg">
                   <Zap className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <span className="font-bold text-xl">Zig Index</span>
+                <span className="font-bold text-xl">{import.meta.env.PUBLIC_SITE_NAME || "Zig Index"}</span>
               </div>
 
               <div className="flex flex-col gap-2 p-4 flex-1 overflow-y-auto">
@@ -455,8 +514,48 @@ export function Navbar({
                 {/* Mobile Actions */}
                 <div className="flex flex-col gap-2 pt-4 border-t mt-2">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 py-2">
-                    Actions
+                    Account & Actions
                   </span>
+
+                  {/* Mobile Auth */}
+                  {isAuthenticated && user ? (
+                    <div className="flex flex-col gap-2 mb-2 px-2">
+                       <div className="flex items-center gap-3 py-2 mb-2 bg-muted/50 rounded-lg p-3">
+                          <Avatar className="w-10 h-10 border border-border/50">
+                            <AvatarImage src={user.avatar_url} alt={user.login} />
+                            <AvatarFallback>{user.login.slice(0, 2).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col overflow-hidden">
+                            <span className="font-medium text-sm truncate">{user.name || user.login}</span>
+                            <span className="text-xs text-muted-foreground truncate">@{user.login}</span>
+                          </div>
+                       </div>
+                       <Button 
+                         variant="outline" 
+                         className="justify-start h-10 text-sm w-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 border-red-200 dark:border-red-900/30"
+                         onClick={() => {
+                           logout();
+                           setIsOpen(false);
+                         }}
+                       >
+                         <LogOut className="w-4 h-4 mr-2" />
+                         Sign Out
+                       </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="secondary" 
+                      className="justify-start h-12 text-base mb-2"
+                      onClick={() => {
+                        setShowSignInDialog(true);
+                        setIsOpen(false);
+                      }}
+                    >
+                      <Github className="w-5 h-5 mr-3" />
+                      Sign In with GitHub
+                    </Button>
+                  )}
+
                   <Button asChild className="justify-start h-12 text-base" title="Add your Zig project">
                     <a href="/how-to-add" onClick={() => setIsOpen(false)}>
                       <Plus className="w-5 h-5 mr-3" />
@@ -465,7 +564,7 @@ export function Navbar({
                   </Button>
                   <Button variant="outline" asChild className="justify-start h-12 text-base" title="View on GitHub">
                     <a 
-                      href="https://github.com/Zig-Index/zig-index.github.io" 
+                      href={import.meta.env.PUBLIC_REPO_URL || "https://github.com/Zig-Index/zig-index.github.io"}
                       target="_blank" 
                       rel="noopener noreferrer"
                     >

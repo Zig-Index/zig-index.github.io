@@ -3,20 +3,21 @@ import Layout from "../layouts/Layout.astro";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 
-const siteUrl = "https://zig-index.github.io";
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://zig-index.github.io";
+const siteName = import.meta.env.PUBLIC_SITE_NAME || "Zig Index";
 
 const schema = {
   "@context": "https://schema.org",
   "@type": "WebPage",
-  "name": "Page Not Found - Zig Index",
+  "name": `Page Not Found - ${siteName}`,
   "description": "The page you're looking for doesn't exist or has been moved.",
   "url": `${siteUrl}/404`,
 };
 ---
 
 <Layout 
-  title="404 - Page Not Found | Zig Index"
-  description="The page you're looking for doesn't exist or has been moved. Return to Zig Index to discover Zig packages and applications."
+  title={`404 - Page Not Found | ${siteName}`}
+  description={`The page you're looking for doesn't exist or has been moved. Return to ${siteName} to discover Zig packages and applications.`}
   canonicalUrl={`${siteUrl}/404`}
   schema={schema}
 >

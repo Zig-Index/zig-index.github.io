@@ -98,8 +98,8 @@ export function Hero({ stats }: HeroProps) {
             variants={itemVariants}
             className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
           >
-            An unofficial, community-driven index for discovering quality Zig packages and applications. 
-            Find libraries, tools, and software built by the Zig community.
+            Zig Index uses GitHub to host your projects and packages. We simply index and fetch the details to display them here.
+            Add your project via Pull Request to join our community-driven collection.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -267,7 +267,7 @@ export function Features() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold mb-4">Why <span className="gradient-text">Zig Index</span>?</h2>
+          <h2 className="text-3xl font-bold mb-4">Why use <span className="gradient-text">Zig Index</span>?</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             The simplest way to discover quality Zig packages and applications
           </p>

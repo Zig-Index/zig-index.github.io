@@ -3,19 +3,20 @@ import Layout from "../layouts/Layout.astro";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 
-const siteUrl = "https://zig-index.github.io";
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://zig-index.github.io";
+const siteName = import.meta.env.PUBLIC_SITE_NAME || "Zig Index";
 
 const schema = {
   "@context": "https://schema.org",
   "@type": "WebPage",
-  "name": "Server Error - Zig Index",
+  "name": `Server Error - ${siteName}`,
   "description": "Something went wrong on our end. Please try again later.",
   "url": `${siteUrl}/500`,
 };
 ---
 
 <Layout 
-  title="500 - Server Error | Zig Index"
+  title={`500 - Server Error | ${siteName}`}
   description="Something went wrong on our end. Please try again later or return to the homepage."
   canonicalUrl={`${siteUrl}/500`}
   schema={schema}

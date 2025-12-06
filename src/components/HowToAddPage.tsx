@@ -455,6 +455,19 @@ MIT License - see LICENSE file for details.`}
             <div className="space-y-4">
               <Card>
                 <CardHeader>
+                  <CardTitle className="text-base">Why use Zig Index?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    The simplest way to discover quality Zig packages and applications.
+                    We provide a curated registry, live GitHub stats with smart caching, 
+                    powerful search, and a community-driven contribution process.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
                   <CardTitle className="text-base">How long until my project appears?</CardTitle>
                 </CardHeader>
                 <CardContent>

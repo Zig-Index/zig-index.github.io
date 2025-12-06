@@ -17,20 +17,21 @@ const searchItems = allEntries.map(e => ({
   fullName: `${e.owner}/${e.repo}`,
 }));
 
-const siteUrl = "https://zig-index.github.io";
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://zig-index.github.io";
+const siteName = import.meta.env.PUBLIC_SITE_NAME || "Zig Index";
 
 const schema = {
   "@context": "https://schema.org",
   "@type": "HowTo",
-  "name": "How to Add Your Zig Project to Zig Index",
-  "description": "Learn how to submit your Zig package or application to the Zig Index registry via Pull Request.",
+  "name": `How to Add Your Zig Project to ${siteName}`,
+  "description": `Learn how to submit your Zig package or application to the ${siteName} registry via Pull Request.`,
   "url": `${siteUrl}/how-to-add`,
   "step": [
     {
       "@type": "HowToStep",
       "position": 1,
       "name": "Fork the Registry Repository",
-      "text": "Fork the Zig Index registry repository on GitHub to get started."
+      "text": `Fork the ${siteName} registry repository on GitHub to get started.`
     },
     {
       "@type": "HowToStep",
@@ -49,8 +50,8 @@ const schema = {
 ---
 
 <Layout 
-  title="How to Add Your Zig Project | Zig Index"
-  description="Learn how to add your Zig package or application to Zig Index. Simple Pull Request process to get your project listed in the community registry."
+  title={`How to Add Your Zig Project | ${siteName}`}
+  description={`Learn how to add your Zig package or application to ${siteName}. Simple Pull Request process to get your project listed in the community registry.`}
   keywords="add zig package, submit zig project, zig registry contribution, zig community, open source zig, zig index"
   canonicalUrl={`${siteUrl}/how-to-add`}
   schema={schema}

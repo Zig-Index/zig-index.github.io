@@ -108,6 +108,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          PUBLIC_GITHUB_CLIENT_ID: Ov23liNA7Mrx3tkf8p57
+          PUBLIC_GOOGLE_ANALYTICS_ID: G-KQ8C71NKHG
+          PUBLIC_AUTHOR_NAME: Muhammad Fiaz
+          PUBLIC_AUTHOR_URL: https://github.com/muhammad-fiaz
+          PUBLIC_SITE_NAME: Zig Index
+          PUBLIC_SITE_URL: https://zig-index.github.io
+          PUBLIC_REPO_URL: https://github.com/Zig-Index/zig-index.github.io
+          PUBLIC_DONATION_URL: https://pay.muhammadfiaz.com
 
   deploy:
     needs: build

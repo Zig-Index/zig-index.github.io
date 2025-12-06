@@ -83,6 +83,14 @@ export function RegistryCard({ entry, compact = false }: RegistryCardProps) {
 
   const cardUrl = `/repo?owner=${encodeURIComponent(entry.owner)}&name=${encodeURIComponent(entry.repo)}`;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent navigation if clicking on interactive elements that didn't stop propagation
+    if ((e.target as HTMLElement).closest('a') || (e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    window.location.href = cardUrl;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -91,13 +99,9 @@ export function RegistryCard({ entry, compact = false }: RegistryCardProps) {
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2 }}
       className="h-full relative group"
+      onClick={handleCardClick}
     >
-      <a 
-        href={cardUrl}
-        className="block h-full"
-        title={`View ${entry.name} details`}
-      >
-        <Card className={cn(
+      <Card className={cn(
           "h-full flex flex-col hover:shadow-xl transition-all duration-300 min-h-60 sm:min-h-[280px] border-border/50 hover:border-primary/30 bg-card cursor-pointer",
           isDeleted && "opacity-70 border-destructive/30"
         )}>
@@ -275,7 +279,6 @@ export function RegistryCard({ entry, compact = false }: RegistryCardProps) {
           )}
         </CardFooter>
       </Card>
-      </a>
     </motion.div>
   );
 }

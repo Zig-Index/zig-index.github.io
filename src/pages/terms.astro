@@ -17,20 +17,21 @@ const searchItems = allEntries.map(e => ({
   fullName: `${e.owner}/${e.repo}`,
 }));
 
-const pageTitle = "Terms of Service | Zig Index";
-const pageDescription = "Terms of Service for Zig Index - Community guidelines and usage terms for this unofficial Zig package index.";
+const siteName = import.meta.env.PUBLIC_SITE_NAME || "Zig Index";
+const pageTitle = `Terms of Service | ${siteName}`;
+const pageDescription = `Terms of Service for ${siteName} - Community guidelines and usage terms for this unofficial Zig package index.`;
 
-const siteUrl = "https://zig-index.github.io";
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://zig-index.github.io";
 
 const schema = {
   "@context": "https://schema.org",
   "@type": "WebPage",
-  "name": "Terms of Service - Zig Index",
-  "description": "Terms of service for Zig Index, an unofficial, community-driven index of Zig packages and applications. Not affiliated with the Zig Software Foundation.",
+  "name": `Terms of Service - ${siteName}`,
+  "description": `Terms of service for ${siteName}, an unofficial, community-driven index of Zig packages and applications. Not affiliated with the Zig Software Foundation.`,
   "url": `${siteUrl}/terms`,
   "publisher": {
     "@type": "Organization",
-    "name": "Zig Index",
+    "name": siteName,
     "url": siteUrl
   }
 };

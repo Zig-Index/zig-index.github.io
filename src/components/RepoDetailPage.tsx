@@ -59,9 +59,12 @@ import {
   fetchRepoReleasesWithCache,
   fetchRepoZonWithCache,
   fetchRepoIssuesWithCache,
+  fetchRepoCommitsWithCache,
   initializeCache 
 } from "@/lib/cachedFetcher";
-import type { RegistryEntryWithCategory, RepoVersion, ZigDependency, RepoIssuesInfo } from "@/lib/schemas";
+import type { RegistryEntryWithCategory, RepoVersion, ZigDependency, RepoIssuesInfo, CommitInfo } from "@/lib/schemas";
+import CommitHistory from "./CommitHistory";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 // Query client
 const queryClient = new QueryClient({
@@ -318,7 +321,7 @@ function DependenciesCard({
                     const depInfo = getDependencyInfo(dep);
                     return (
                       <div key={index} className="flex items-center justify-between text-sm p-1.5 rounded hover:bg-muted/50">
-                        <span className="font-mono text-foreground">{depInfo.name}</span>
+                        <span className="font-mono text-foreground truncate max-w-[150px] sm:max-w-[200px]" title={depInfo.name}>{depInfo.name}</span>
                         <div className="flex items-center gap-2">
                           {depInfo.type === 'github' && depInfo.repoUrl && (
                             <a 
@@ -556,7 +559,13 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     queryKey: ["repoStats", fullName],
     queryFn: async () => {
       const result = await fetchRepoStatsWithCache(owner, name);
-      return { stats: result.stats, status: result.status, fromCache: result.fromCache, isStale: result.isStale };
+      return { 
+        stats: result.stats, 
+        status: result.status, 
+        fromCache: result.fromCache, 
+        isStale: result.isStale,
+        error: result.error 
+      };
     },
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -601,6 +610,48 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     staleTime: 1000 * 60 * 60, // 1 hour
   });
 
+  // Fetch commits with IndexedDB caching
+  const { data: commitsResult, isLoading: commitsLoading } = useQuery({
+    queryKey: ["repoCommits", fullName],
+    queryFn: async () => {
+      const result = await fetchRepoCommitsWithCache(owner, name);
+      return { commits: result.commits, isStale: result.isStale, error: result.error };
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+
+  const { isAuthenticated, setShowSignInDialog } = useAuthStore();
+  const statsError = statsResult?.error;
+  
+  // Check for rate limit errors
+  const isRateLimited = React.useMemo(() => {
+    const errors = [
+      statsResult?.error,
+      readmeResult?.error,
+      releasesResult?.error,
+      zonResult?.error,
+      issuesResult?.error,
+      commitsResult?.error
+    ];
+    
+    return errors.some(e => e && (
+      e.includes("Rate limit") || 
+      e.includes("403") || 
+      e.includes("429")
+    ));
+  }, [statsResult, readmeResult, releasesResult, zonResult, issuesResult, commitsResult]);
+
+  // Trigger sign in dialog on rate limit
+  React.useEffect(() => {
+    if (isRateLimited && !isAuthenticated) {
+      // Small delay to ensure UI is mounted and to avoid flashing
+      const timer = setTimeout(() => {
+        setShowSignInDialog(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isRateLimited, isAuthenticated, setShowSignInDialog]);
+
   const stats = statsResult?.stats;
   const repoStatus = statsResult?.status || "unknown";
   const readme = readmeResult?.readme;
@@ -611,6 +662,8 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
   const zonError = zonResult?.error;
   const issuesInfo = issuesResult?.issues;
   const issuesError = issuesResult?.error;
+  const commits = commitsResult?.commits;
+  const commitsError = commitsResult?.error;
   const latestVersion = releases?.latestVersion;
   const versions = releases?.versions || [];
   const isDeleted = repoStatus === "deleted";
@@ -709,25 +762,25 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
         <div className="border-b hero-gradient relative overflow-hidden">
           {/* Background decoration */}
           <div className="absolute inset-0 -z-10">
-            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-primary/10 rounded-full blur-3xl" />
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-3xl opacity-50" />
+            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-primary/10 rounded-full blur-3xl opacity-50" />
           </div>
           
-          <div className="container mx-auto px-4 py-8 relative z-10">
+          <div className="container mx-auto px-4 py-8 relative z-10 w-full overflow-hidden">
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4 flex-wrap">
               <a href="/" className="hover:text-foreground transition-colors">Home</a>
               <span>/</span>
               <a href="/packages" className="hover:text-foreground transition-colors">Packages</a>
               <span>/</span>
-              <span className="text-foreground">{fullName}</span>
+              <span className="text-foreground break-all">{fullName}</span>
             </div>
 
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 overflow-hidden">
               {/* Title and Meta */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="min-w-0">
+                <div className="flex items-center gap-3 mb-2 flex-wrap">
+                  <div className="min-w-0 w-full sm:w-auto">
                     <h1 className="text-2xl sm:text-3xl font-bold wrap-break-word">{displayData.name}</h1>
                     <p className="text-muted-foreground">
                       by{" "}
@@ -760,7 +813,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                 {minZigVersion && (
                   <div className="mb-4">
                     <Badge variant="outline" className="font-mono gap-1.5">
-                      <Code className="w-3 h-3" />
+                      <Code className="w-3 h-3 shrink-0" />
                       Requires Zig {minZigVersion}+
                     </Badge>
                   </div>
@@ -811,7 +864,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                   )}
                   {displayData.license && (
                     <Badge variant="outline" className="gap-1">
-                      <Scale className="w-3 h-3" />
+                      <Scale className="w-3 h-3 shrink-0" />
                       {displayData.license}
                     </Badge>
                   )}
@@ -1015,7 +1068,6 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
           </div>
         </div>
 
-        {/* Content */}
         <div className="container mx-auto px-4 py-8 relative z-10">
           {/* Warning for deleted repos */}
           {isDeleted && (
@@ -1036,12 +1088,12 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
 
           {/* Background decoration */}
           <div className="absolute inset-0 -z-10">
-            <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
-            <div className="absolute bottom-20 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
+            <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl opacity-50" />
+            <div className="absolute bottom-20 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl opacity-50" />
           </div>
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content - README */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 min-w-0">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
@@ -1062,7 +1114,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                     </div>
                   ) : readme?.readme_html ? (
                     <div 
-                      className="prose prose-neutral dark:prose-invert max-w-none overflow-x-hidden overflow-y-visible wrap-break-word"
+                      className="readme-content prose prose-sm md:prose-base prose-neutral dark:prose-invert w-full max-w-full overflow-hidden wrap-break-word"
                       dangerouslySetInnerHTML={{ __html: readme.readme_html }}
                     />
                   ) : readmeError ? (
@@ -1196,6 +1248,18 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                       )}
                     </>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Commit History Card */}
+              <Card>
+                <CardContent className="pt-6">
+                  <CommitHistory 
+                    commits={commits || []} 
+                    isLoading={commitsLoading} 
+                    error={commitsError}
+                    repoUrl={displayData.htmlUrl}
+                  />
                 </CardContent>
               </Card>
 

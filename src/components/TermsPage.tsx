@@ -24,7 +24,7 @@ export function TermsPage({ searchItems = [] }: TermsPageProps) {
       <Navbar searchItems={searchItems} />
 
       <main className="flex-1 container mx-auto px-4 py-16">
-        <div className="max-w-3xl mx-auto prose prose-neutral dark:prose-invert">
+        <div className="max-w-3xl mx-auto prose prose-neutral dark:prose-invert readme-content">
           <h1 className="text-3xl font-bold mb-8">Terms of Service</h1>
 
           <p className="text-muted-foreground mb-6">
@@ -34,21 +34,21 @@ export function TermsPage({ searchItems = [] }: TermsPageProps) {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Acceptance of Terms</h2>
             <p>
-              By accessing and using Zig Index ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
+              By accessing and using {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
             </p>
           </section>
 
           <section className="mb-8 p-4 bg-muted/50 rounded-lg border">
             <h2 className="text-2xl font-semibold mb-4">Disclaimer</h2>
             <p className="text-sm text-muted-foreground">
-              Zig Index is an independent and unofficial registry of Zig packages and applications. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All packages, libraries, and applications listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. We do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.
+              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} is an independent and unofficial registry of Zig packages and applications. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All packages, libraries, and applications listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. We do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Description of Service</h2>
             <p>
-              Zig Index is an unofficial, community-driven index of Zig programming language packages and applications. The service provides:
+              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} is an unofficial, community-driven index of Zig programming language packages and applications. The service provides:
             </p>
             <ul className="list-disc pl-6">
               <li>A searchable directory of Zig packages and applications</li>
@@ -85,6 +85,14 @@ export function TermsPage({ searchItems = [] }: TermsPageProps) {
           </section>
 
           <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Privacy and Cookies</h2>
+            <p>
+              Your use of the Service is also governed by our <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>. 
+              We use cookies and similar technologies to analyze traffic and improve the Service. By using the Service and accepting our cookie policy, you consent to the collection and use of information as described in the Privacy Policy.
+            </p>
+          </section>
+
+          <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Disclaimer of Warranties</h2>
             <p>
               The Service is provided "as is" without warranty of any kind, either express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee the accuracy, completeness, or reliability of any content displayed.
@@ -94,7 +102,7 @@ export function TermsPage({ searchItems = [] }: TermsPageProps) {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Limitation of Liability</h2>
             <p>
-              In no event shall Zig Index, its contributors, or maintainers be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of the Service.
+              In no event shall {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"}, its contributors, or maintainers be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of the Service.
             </p>
           </section>
 
@@ -136,14 +144,14 @@ export function TermsPage({ searchItems = [] }: TermsPageProps) {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Contact Information</h2>
             <p>
-              If you have questions about these Terms, please open an issue on our <a href="https://github.com/Zig-Index/zig-index.github.io/issues" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GitHub repository</a>.
+              If you have questions about these Terms, please open an issue on our <a href={`${import.meta.env.PUBLIC_REPO_URL || "https://github.com/Zig-Index/zig-index.github.io"}/issues`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GitHub repository</a>.
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Open Source</h2>
             <p>
-              Zig Index is built by the community for the community. The source code is available on <a href="https://github.com/Zig-Index/zig-index.github.io" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GitHub</a> under the MIT License.
+              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} is built by the community for the community. The source code is available on <a href={import.meta.env.PUBLIC_REPO_URL || "https://github.com/Zig-Index/zig-index.github.io"} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GitHub</a> under the MIT License.
             </p>
           </section>
         </div>

@@ -1,6 +1,6 @@
 # Zig Index
 
-A curated registry for discovering Zig packages and applications.
+A curated indexing registry for discovering Zig packages and applications.
 
 **[Live Site](https://zig-index.github.io)** · **[Add Your Project](https://zig-index.github.io/how-to-add)** · **[Registry](https://github.com/Zig-Index/registry)**
 
@@ -35,19 +35,6 @@ To add your project to Zig Index:
 
 See the [registry README](https://github.com/Zig-Index/registry) for details.
 
-### JSON Schema
-
-```json
-{
-  "name": "logly",
-  "owner": "muhammad-fiaz",
-  "repo": "logly.zig",
-  "description": "High-performance, structured logging library for Zig.",
-  "homepage": "https://muhammad-fiaz.github.io/logly.zig",
-  "license": "MIT",
-  "category": "development-tools"
-}
-```
 
 ## Development
 

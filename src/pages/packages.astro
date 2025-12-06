@@ -7,7 +7,8 @@ import { loadPackages, getRegistryStats } from "../lib/registryLoader";
 const packages = await loadPackages();
 const stats = getRegistryStats(packages);
 
-const siteUrl = "https://zig-index.github.io";
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://zig-index.github.io";
+const siteName = import.meta.env.PUBLIC_SITE_NAME || "Zig Index";
 
 const schema = {
   "@context": "https://schema.org",
@@ -34,7 +35,7 @@ const schema = {
 ---
 
 <Layout 
-  title="Zig Packages - Libraries & Modules | Zig Index"
+  title={`Zig Packages - Libraries & Modules | ${siteName}`}
   description={`Browse ${stats.totalPackages} Zig packages. Find libraries, modules, and reusable code for your Zig projects.`}
   keywords="zig packages, zig libraries, zig modules, zig code, zig dependencies, zig ecosystem, zig index"
   canonicalUrl={`${siteUrl}/packages`}

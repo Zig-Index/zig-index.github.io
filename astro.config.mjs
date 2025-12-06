@@ -41,12 +41,20 @@ export default defineConfig({
         '@': '/src',
       },
     },
+    server: {
+      proxy: {
+        '/api/github': {
+          target: 'https://github.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/github/, ''),
+        },
+      },
+    },
     build: {
       chunkSizeWarningLimit: 1500,
       rollupOptions: {
         output: {
           manualChunks: {
-            'highlight': ['highlight.js'],
             'dexie': ['dexie'],
             'framer': ['framer-motion'],
             'react-query': ['@tanstack/react-query'],

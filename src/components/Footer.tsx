@@ -15,7 +15,7 @@ const footerLinks = {
     { label: "Zig Forum", href: "https://ziggit.dev", external: true },
   ],
   community: [
-    { label: "GitHub", href: "https://github.com/Zig-Index/zig-index.github.io", external: true },
+    { label: "GitHub", href: import.meta.env.PUBLIC_REPO_URL || "https://github.com/Zig-Index/zig-index.github.io", external: true },
   ],
   legal: [
     { label: "Privacy Policy", href: "/privacy" },
@@ -29,11 +29,11 @@ export function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           <div className="sm:col-span-2 lg:col-span-1">
-            <a href="/" className="flex items-center gap-2 mb-4" title="Zig Index Home">
+            <a href="/" className="flex items-center gap-2 mb-4" title={`${import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} Home`}>
               <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg hover:scale-105 transition-transform">
                 <Zap className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-bold text-xl">Zig Index</span>
+              <span className="font-bold text-xl">{import.meta.env.PUBLIC_SITE_NAME || "Zig Index"}</span>
             </a>
             <p className="text-sm text-muted-foreground mb-4">
               Discover and explore the best Zig packages and applications. 
@@ -41,17 +41,17 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-3">
               <a
-                href="https://github.com/Zig-Index/zig-index.github.io"
+                href={import.meta.env.PUBLIC_REPO_URL || "https://github.com/Zig-Index/zig-index.github.io"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 title="View on GitHub"
-                aria-label="View Zig Index on GitHub"
+                aria-label={`View ${import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} on GitHub`}
               >
                 <Github className="w-5 h-5" />
               </a>
               <a
-                href="https://pay.muhammadfiaz.com"
+                href={import.meta.env.PUBLIC_DONATION_URL || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -108,7 +108,7 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="https://github.com/Zig-Index/zig-index.github.io"
+                  href={import.meta.env.PUBLIC_REPO_URL || "https://github.com/Zig-Index/zig-index.github.io"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -119,7 +119,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://pay.muhammadfiaz.com"
+                  href={import.meta.env.PUBLIC_DONATION_URL || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -154,7 +154,7 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Zig Index. Open source under MIT License.
+              © {new Date().getFullYear()} {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"}. Open source under MIT License.
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Not affiliated with the Zig Software Foundation.
@@ -163,13 +163,13 @@ export function Footer() {
           <p className="text-sm text-muted-foreground flex items-center gap-1 flex-wrap justify-center">
             Made with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> by{" "}
             <a 
-              href="https://github.com/muhammad-fiaz" 
+              href={import.meta.env.PUBLIC_AUTHOR_URL || "#"} 
               target="_blank" 
               rel="noopener noreferrer"
               className="font-medium hover:text-foreground transition-colors underline-offset-4 hover:underline"
-              title="View Muhammad Fiaz's GitHub profile"
+              title={`View ${import.meta.env.PUBLIC_AUTHOR_NAME || "Anonymous"}'s GitHub profile`}
             >
-              Muhammad Fiaz
+              {import.meta.env.PUBLIC_AUTHOR_NAME || "Anonymous"}
             </a>
           </p>
         </div>

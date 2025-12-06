@@ -24,7 +24,7 @@ export function PrivacyPage({ searchItems = [] }: PrivacyPageProps) {
       <Navbar searchItems={searchItems} />
 
       <main className="flex-1 container mx-auto px-4 py-16">
-        <div className="max-w-3xl mx-auto prose prose-neutral dark:prose-invert">
+        <div className="max-w-3xl mx-auto prose prose-neutral dark:prose-invert readme-content">
           <h1 className="text-3xl font-bold mb-8">Privacy Policy</h1>
 
           <p className="text-muted-foreground mb-6">
@@ -34,14 +34,14 @@ export function PrivacyPage({ searchItems = [] }: PrivacyPageProps) {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Introduction</h2>
             <p>
-              Zig Index ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website at <a href="https://zig-index.github.io" className="text-primary hover:underline">zig-index.github.io</a>.
+              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website at <a href={import.meta.env.PUBLIC_SITE_URL || "https://zig-index.github.io"} className="text-primary hover:underline">{import.meta.env.PUBLIC_SITE_URL?.replace(/^https?:\/\//, '') || "zig-index.github.io"}</a>.
             </p>
           </section>
 
           <section className="mb-8 p-4 bg-muted/50 rounded-lg border">
             <h2 className="text-2xl font-semibold mb-4">Disclaimer</h2>
             <p className="text-sm text-muted-foreground">
-              Zig Index is an independent and unofficial registry of Zig packages and applications. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All packages, libraries, and applications listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. We do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.
+              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} is an independent and unofficial registry of Zig packages and applications. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All packages, libraries, and applications listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. We do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.
             </p>
           </section>
 
@@ -59,7 +59,10 @@ export function PrivacyPage({ searchItems = [] }: PrivacyPageProps) {
               <li>Device type (desktop, mobile, tablet)</li>
             </ul>
             <p>
-              Google Analytics uses cookies and similar technologies to collect this information. You can opt out of Google Analytics by installing the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google Analytics Opt-out Browser Add-on</a>.
+              Google Analytics uses cookies and similar technologies to collect this information. 
+              <strong>We only activate Google Analytics if you explicitly accept cookies via our consent banner.</strong>
+              You can change your preference at any time by clearing your browser's local storage for this site.
+              Additionally, you can opt out of Google Analytics across all websites by installing the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google Analytics Opt-out Browser Add-on</a>.
             </p>
 
             <h3 className="text-xl font-medium mb-3 mt-6">Local Storage</h3>
@@ -97,7 +100,11 @@ export function PrivacyPage({ searchItems = [] }: PrivacyPageProps) {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Cookies</h2>
             <p>
-              We use cookies primarily through Google Analytics. Cookies are small text files stored on your device that help us analyze web traffic. You can control cookies through your browser settings or by using browser extensions.
+              We use cookies primarily through Google Analytics. Cookies are small text files stored on your device that help us analyze web traffic. 
+            </p>
+            <p className="mt-2">
+              When you first visit our site, we ask for your consent to use these cookies. If you choose to "Reject All", we will not load Google Analytics scripts, and no analytics cookies will be set.
+              You can also control cookies through your browser settings or by using browser extensions.
             </p>
           </section>
 
@@ -136,14 +143,14 @@ export function PrivacyPage({ searchItems = [] }: PrivacyPageProps) {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Open Source</h2>
             <p>
-              Zig Index is an open-source project. You can review our source code on <a href="https://github.com/Zig-Index/zig-index.github.io" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GitHub</a> to see exactly how we handle data.
+              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} is an open-source project. You can review our source code on <a href={import.meta.env.PUBLIC_REPO_URL || "https://github.com/Zig-Index/zig-index.github.io"} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GitHub</a> to see exactly how we handle data.
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Contact</h2>
             <p>
-              If you have any questions about this Privacy Policy, please open an issue on our <a href="https://github.com/Zig-Index/zig-index.github.io/issues" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GitHub repository</a>.
+              If you have any questions about this Privacy Policy, please open an issue on our <a href={`${import.meta.env.PUBLIC_REPO_URL || "https://github.com/Zig-Index/zig-index.github.io"}/issues`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GitHub repository</a>.
             </p>
           </section>
         </div>

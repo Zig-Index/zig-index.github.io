@@ -1,6 +1,33 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { Filter, Sort, Pagination } from "@/lib/schemas";
+import type { Filter, Sort, Pagination, SearchItem } from "@/lib/schemas";
+
+// Navbar Store
+interface NavbarState {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  showSuggestions: boolean;
+  setShowSuggestions: (show: boolean) => void;
+  suggestions: SearchItem[];
+  setSuggestions: (suggestions: SearchItem[]) => void;
+  typeFilter: "all" | "package" | "application";
+  setTypeFilter: (type: "all" | "package" | "application") => void;
+  localSearch: string;
+  setLocalSearch: (search: string) => void;
+}
+
+export const useNavbarStore = create<NavbarState>((set) => ({
+  isOpen: false,
+  setIsOpen: (isOpen) => set({ isOpen }),
+  showSuggestions: false,
+  setShowSuggestions: (showSuggestions) => set({ showSuggestions }),
+  suggestions: [],
+  setSuggestions: (suggestions) => set({ suggestions }),
+  typeFilter: "all",
+  setTypeFilter: (typeFilter) => set({ typeFilter }),
+  localSearch: "",
+  setLocalSearch: (localSearch) => set({ localSearch }),
+}));
 
 // Filter Store
 interface FilterState {
@@ -17,6 +44,19 @@ interface FilterState {
   setPageSize: (pageSize: number) => void;
   setCategory: (category: string | undefined) => void;
 }
+
+// Repo Detail Store
+interface RepoDetailState {
+  owner: string | null;
+  name: string | null;
+  setRepo: (owner: string | null, name: string | null) => void;
+}
+
+export const useRepoDetailStore = create<RepoDetailState>((set) => ({
+  owner: null,
+  name: null,
+  setRepo: (owner, name) => set({ owner, name }),
+}));
 
 const defaultFilter: Filter = { type: "all" };
 const defaultSort: Sort = { field: "stars", order: "desc" };

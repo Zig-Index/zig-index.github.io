@@ -16,16 +16,14 @@ function RepoPageSkeleton() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 mesh-gradient relative overflow-hidden">
-        {/* Header skeleton */}
+      <main className="flex-1 mesh-gradient relative overflow-hidden w-full">
         <div className="border-b hero-gradient relative overflow-hidden">
           <div className="absolute inset-0 -z-10">
             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-3xl" />
             <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-primary/10 rounded-full blur-3xl" />
           </div>
-          <div className="container mx-auto px-4 py-8 relative z-10">
-            {/* Breadcrumb skeleton */}
-            <div className="flex items-center gap-2 mb-4">
+          <div className="container mx-auto px-4 py-8 relative z-10 w-full overflow-hidden">
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
               <Skeleton className="h-4 w-12" />
               <span className="text-muted-foreground">/</span>
               <Skeleton className="h-4 w-16" />
@@ -33,8 +31,8 @@ function RepoPageSkeleton() {
               <Skeleton className="h-4 w-24" />
             </div>
             
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-              <div className="flex-1">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 overflow-hidden">
+              <div className="flex-1 min-w-0">
                 <Skeleton className="h-8 sm:h-9 w-40 sm:w-48 mb-2" />
                 <Skeleton className="h-4 sm:h-5 w-20 sm:w-24 mb-4" />
                 <Skeleton className="h-5 sm:h-6 w-full max-w-lg mb-4" />
@@ -43,7 +41,6 @@ function RepoPageSkeleton() {
                   <Skeleton className="h-5 sm:h-6 w-20 sm:w-24 rounded-full" />
                   <Skeleton className="h-5 sm:h-6 w-12 sm:w-16 rounded-full" />
                 </div>
-                {/* Installation commands skeleton */}
                 <div className="mb-4">
                   <Skeleton className="h-3 sm:h-4 w-24 sm:w-32 mb-2" />
                   <div className="space-y-2">
@@ -59,7 +56,6 @@ function RepoPageSkeleton() {
                     </div>
                   </div>
                 </div>
-                {/* Badges skeleton */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   <Skeleton className="h-5 sm:h-6 w-16 sm:w-20 rounded-full" />
                   <Skeleton className="h-5 sm:h-6 w-12 sm:w-16 rounded-full" />
@@ -75,8 +71,7 @@ function RepoPageSkeleton() {
           </div>
         </div>
 
-        {/* Content skeleton */}
-        <div className="container mx-auto px-4 py-8 relative z-10">
+        <div className="container mx-auto px-4 py-8 relative z-10 w-full overflow-hidden">
           <div className="grid lg:grid-cols-3 gap-8">
             {/* README skeleton */}
             <div className="lg:col-span-2">
@@ -204,14 +199,15 @@ function RepoPageSkeleton() {
   );
 }
 
+import { useRepoDetailStore } from "@/stores/useAppStore";
+
 // Client-side component that extracts owner/name from URL hash
 interface RepoPageClientProps {
   registryEntries?: RegistryEntryWithCategory[];
 }
 
 export function RepoPageClient({ registryEntries = [] }: RepoPageClientProps) {
-  const [owner, setOwner] = React.useState<string | null>(null);
-  const [name, setName] = React.useState<string | null>(null);
+  const { owner, name, setRepo } = useRepoDetailStore();
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -221,16 +217,14 @@ export function RepoPageClient({ registryEntries = [] }: RepoPageClientProps) {
     const nameParam = params.get("name");
 
     if (ownerParam && nameParam) {
-      setOwner(ownerParam);
-      setName(nameParam);
+      setRepo(ownerParam, nameParam);
     } else {
       // Try to parse from hash: #owner/name
       const hash = window.location.hash.slice(1); // Remove #
       if (hash) {
         const parts = hash.split("/");
         if (parts.length >= 2) {
-          setOwner(parts[0]);
-          setName(parts.slice(1).join("/")); // Handle names with slashes
+          setRepo(parts[0], parts.slice(1).join("/"));
         } else {
           setError("Invalid URL format. Expected: /repo?owner=xxx&name=yyy or /repo#owner/name");
         }
@@ -238,7 +232,7 @@ export function RepoPageClient({ registryEntries = [] }: RepoPageClientProps) {
         setError("No repository specified. Use /repo?owner=xxx&name=yyy or /repo#owner/name");
       }
     }
-  }, []);
+  }, [setRepo]);
 
   // Look up the entry from registry
   const entry = React.useMemo(() => {

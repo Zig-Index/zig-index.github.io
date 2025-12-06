@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { CookieConsent } from "@/components/CookieConsent";
 
 interface Props {
   title?: string;
@@ -11,13 +12,13 @@ interface Props {
   schema?: object;
 }
 
-const siteUrl = "https://zig-index.github.io";
-const siteName = "Zig Index";
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://zig-index.github.io";
+const siteName = import.meta.env.PUBLIC_SITE_NAME || "Zig Index";
 const twitterHandle = "@zig_index";
 
 const { 
-  title = "Zig Index - Discover Zig Packages & Applications",
-  description = "An unofficial, community-driven index for discovering Zig packages, libraries, and applications. Not affiliated with the Zig Software Foundation.",
+  title = `${siteName} - Discover Zig Packages & Applications`,
+  description = `An unofficial, community-driven index for discovering Zig packages, libraries, and applications. Not affiliated with the Zig Software Foundation.`,
   keywords = "zig, zig programming language, zig packages, zig libraries, zig applications, zig ecosystem, zig modules, package index, zig tools, zig index",
   canonicalUrl = siteUrl,
   ogImage = `${siteUrl}/og-image.png`,
@@ -67,7 +68,7 @@ const schemaJson = JSON.stringify(schema || defaultSchema);
 ---
 
 <!DOCTYPE html>
-<html lang="en" class="overflow-x-hidden">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -83,8 +84,8 @@ const schemaJson = JSON.stringify(schema || defaultSchema);
     <meta name="description" content={description} />
     <meta name="keywords" content={keywords} />
     <meta name="author" content="Zig Index Community" />
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="robots" content="index, follow, noarchive, noimageindex, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, noarchive, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="bingbot" content="index, follow" />
     <meta name="language" content="English" />
     <meta name="revisit-after" content="3 days" />
@@ -135,16 +136,6 @@ const schemaJson = JSON.stringify(schema || defaultSchema);
     <!-- Structured Data / JSON-LD -->
     <script type="application/ld+json" set:html={schemaJson} />
     
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-KQ8C71NKHG"></script>
-    <script is:inline>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-KQ8C71NKHG');
-    </script>
-    
     <!-- Theme script to prevent flash -->
     <script is:inline>
       const theme = localStorage.getItem('theme') || 'system';
@@ -155,5 +146,6 @@ const schemaJson = JSON.stringify(schema || defaultSchema);
   </head>
   <body class="min-h-screen bg-background text-foreground antialiased">
     <slot />
+    <CookieConsent client:load />
   </body>
 </html>
