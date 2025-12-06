@@ -1,3 +1,6 @@
 [submodule "src/registry"]
 	path = src/registry
 	url = https://github.com/Zig-Index/registry.git
+[submodule "auth"]
+	path = auth
+	url = https://github.com/Zig-Index/auth

@@ -75,7 +75,54 @@ export function Navbar({
     localSearch, setLocalSearch
   } = useNavbarStore();
 
-  const { user, isAuthenticated, logout, showSignInDialog, setShowSignInDialog } = useAuthStore();
+  const { 
+    user, 
+    isAuthenticated, 
+    logout, 
+    showSignInDialog, 
+    setShowSignInDialog,
+    setToken,
+    setUser
+  } = useAuthStore();
+
+  // Handle OAuth callback
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      const params = new URLSearchParams(hash.substring(1)); // remove #
+      const accessToken = params.get("access_token");
+
+      if (accessToken) {
+        // Clear hash to clean up URL
+        window.history.replaceState(null, "", window.location.pathname);
+        
+        // Verify token and set user
+        const verifyToken = async () => {
+          try {
+            const userResponse = await fetch("https://api.github.com/user", {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+              },
+            });
+
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              setToken(accessToken);
+              setUser({
+                login: userData.login,
+                avatar_url: userData.avatar_url,
+                name: userData.name,
+              });
+            }
+          } catch (e) {
+            console.error("Failed to verify token", e);
+          }
+        };
+        verifyToken();
+      }
+    }
+  }, [setToken, setUser]);
 
   const searchRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
