@@ -8,7 +8,7 @@ const registrySchema = z.object({
   owner: z.string(),
   repo: z.string(),
   description: z.string(),
-  type: z.enum(["package", "application"]).default("package"),
+  type: z.enum(["package", "application", "project"]).default("package"),
   homepage: z.string().optional(),
   license: z.string().optional(),
   category: z.string().optional(),
