@@ -10,8 +10,30 @@ import { RegistryCard, RegistryCardSkeleton } from "./RepoCard";
 import { EmptyState } from "./SyncStatus";
 import { Button } from "./ui/button";
 import { ArrowRight, Package } from "lucide-react";
-import { useRegistryWithStats } from "@/hooks/useRegistryQueries";
-import type { RegistryEntryWithCategory } from "@/lib/schemas";
+import type { RegistryEntryWithCategory, CombinedRepoData } from "@/lib/schemas";
+
+// Helper to convert RegistryEntryWithCategory to CombinedRepoData
+function toCombined(entry: RegistryEntryWithCategory): CombinedRepoData {
+  return {
+    ...entry,
+    status: "exists",
+    stats: {
+      fullName: entry.fullName,
+      description: entry.description,
+      stargazers_count: entry.stars || 0,
+      forks_count: entry.forks || 0,
+      watchers_count: entry.watchers || 0,
+      open_issues_count: 0,
+      pushed_at: entry.updated_at || null,
+      updated_at: entry.updated_at || null,
+      language: null,
+      topics: entry.topics || [],
+      archived: false,
+      license: entry.license || null,
+      lastFetched: Date.now(),
+    }
+  };
+}
 
 // Create query client
 const queryClient = new QueryClient({
@@ -26,22 +48,15 @@ const queryClient = new QueryClient({
 
 interface HomePageContentProps {
   registryEntries?: RegistryEntryWithCategory[];
-  totalPackages?: number;
-  totalApplications?: number;
 }
 
 function HomePageContent({ 
   registryEntries = [], 
-  totalPackages = 0, 
-  totalApplications = 0,
 }: HomePageContentProps) {
-  // Separate packages and applications
-  const packages = React.useMemo(() => {
-    return registryEntries.filter(e => e.type === "package");
-  }, [registryEntries]);
-  
-  const applications = React.useMemo(() => {
-    return registryEntries.filter(e => e.type === "application");
+  // Sort all projects by stars
+  const popularProjects = React.useMemo(() => {
+    return registryEntries
+      .sort((a, b) => (b.stars || 0) - (a.stars || 0));
   }, [registryEntries]);
 
   // Prepare search items for navbar
@@ -57,32 +72,13 @@ function HomePageContent({
     }));
   }, [registryEntries]);
   
-  // Get stats for packages and applications
-  const { data: packagesWithStats, isLoading: packagesLoading } = useRegistryWithStats(
-    packages, 
-    true,
-    { field: "stars", order: "desc" }
-  );
-  const { data: applicationsWithStats, isLoading: applicationsLoading } = useRegistryWithStats(
-    applications, 
-    true,
-    { field: "stars", order: "desc" }
-  );
-
-  const heroStats = {
-    totalRepos: registryEntries.length,
-    totalPackages,
-    totalApplications,
-    lastUpdated: Date.now(),
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar searchItems={searchItems} />
       
       <main className="flex-1">
         {/* Hero Section */}
-        <Hero stats={heroStats} />
+        <Hero />
 
         {/* Features */}
         <Features />
@@ -90,7 +86,7 @@ function HomePageContent({
         {/* Quick Categories */}
         <QuickCategories />
 
-        {/* Popular Packages */}
+        {/* Popular Projects */}
         <section className="py-12 sm:py-16 lg:py-20 mesh-gradient relative overflow-hidden">
           {/* Background decoration */}
           <div className="absolute inset-0 -z-10">
@@ -102,15 +98,15 @@ function HomePageContent({
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
               <div>
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1">
-                  Popular Packages
+                  Popular Projects
                 </h2>
                 <p className="text-muted-foreground text-sm sm:text-base">
-                  Most popular Zig libraries and modules
+                  Most popular Zig projects
                 </p>
               </div>
               <Button variant="outline" asChild className="shrink-0">
-                <a href="/packages" title="View all packages">
-                  View All Packages
+                <a href="/projects" title="View all projects">
+                  View All Projects
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </a>
               </Button>
@@ -118,99 +114,25 @@ function HomePageContent({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               <AnimatePresence mode="popLayout">
-                {packagesLoading ? (
-                  Array.from({ length: Math.min(packages.length || 3, 6) }).map((_, i) => (
-                    <motion.div
-                      key={`package-skeleton-${i}`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: i * 0.05 }}
-                    >
-                      <RegistryCardSkeleton />
-                    </motion.div>
-                  ))
-                ) : packagesWithStats.length > 0 ? (
-                  packagesWithStats.slice(0, 6).map((entry, index) => (
+                {popularProjects.length > 0 ? (
+                  popularProjects.slice(0, 9).map((entry, index) => (
                     <motion.div
                       key={entry.fullName}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                     >
-                      <RegistryCard entry={entry} />
+                      <RegistryCard 
+                        entry={toCombined(entry)} 
+                      />
                     </motion.div>
                   ))
                 ) : (
                   <div className="col-span-full">
                     <EmptyState
                       icon={<Package className="w-12 h-12" />}
-                      title="No packages yet"
-                      description="Add packages to the registry via Pull Request"
-                      action={{ label: "How to Add", onClick: () => window.location.href = "/how-to-add" }}
-                    />
-                  </div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </section>
-
-        {/* Popular Applications */}
-        <section className="py-12 sm:py-16 lg:py-20 gradient-bg relative overflow-hidden">
-          {/* Background decoration */}
-          <div className="absolute inset-0 -z-10">
-            <div className="absolute top-20 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-3xl" />
-          </div>
-          
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-              <div>
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1">
-                  Popular Applications
-                </h2>
-                <p className="text-muted-foreground text-sm sm:text-base">
-                  Tools and software built with Zig
-                </p>
-              </div>
-              <Button variant="outline" asChild className="shrink-0">
-                <a href="/applications" title="View all applications">
-                  View All Applications
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </a>
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              <AnimatePresence mode="popLayout">
-                {applicationsLoading ? (
-                  Array.from({ length: Math.min(applications.length || 3, 6) }).map((_, i) => (
-                    <motion.div
-                      key={`app-skeleton-${i}`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: i * 0.05 }}
-                    >
-                      <RegistryCardSkeleton />
-                    </motion.div>
-                  ))
-                ) : applicationsWithStats.length > 0 ? (
-                  applicationsWithStats.slice(0, 6).map((entry, index) => (
-                    <motion.div
-                      key={entry.fullName}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <RegistryCard entry={entry} />
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="col-span-full">
-                    <EmptyState
-                      icon={<Package className="w-12 h-12" />}
-                      title="No applications yet"
-                      description="Add applications to the registry via Pull Request"
+                      title="No projects yet"
+                      description="Add projects to the registry via Pull Request"
                       action={{ label: "How to Add", onClick: () => window.location.href = "/how-to-add" }}
                     />
                   </div>
@@ -236,14 +158,13 @@ function HomePageContent({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-primary-foreground">Add Your Zig Project</h2>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-primary-foreground">Learn How</h2>
               <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto text-sm sm:text-base">
-                Share your work with the Zig community. Submit a PR to add your 
-                package or application to the registry.
+                Share your work with the Zig community. Adding your project is simple—just add a GitHub tag to your repository.
               </p>
               <Button size="lg" variant="secondary" asChild className="hover-lift">
                 <a href="/how-to-add" title="Learn how to add your project">
-                  Learn How
+                  Add Your Project
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </a>
               </Button>
@@ -260,18 +181,14 @@ function HomePageContent({
 // Props interface for HomePage
 interface HomePageProps {
   registryEntries?: RegistryEntryWithCategory[];
-  totalPackages?: number;
-  totalApplications?: number;
 }
 
 // Wrapper with QueryProvider
-export function HomePage({ registryEntries, totalPackages, totalApplications }: HomePageProps) {
+export function HomePage({ registryEntries }: HomePageProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <HomePageContent 
         registryEntries={registryEntries}
-        totalPackages={totalPackages}
-        totalApplications={totalApplications}
       />
     </QueryClientProvider>
   );

@@ -13,11 +13,34 @@ import { Package, Search, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "./ui/alert";
 import {
   useFilteredRegistry,
-  useRegistryWithStats,
   getUniqueCategories,
   getUniqueLicenses,
+  getUniqueTopics,
 } from "@/hooks/useRegistryQueries";
-import type { Filter, Sort, RegistryEntryWithCategory } from "@/lib/schemas";
+import type { Filter, Sort, RegistryEntryWithCategory, CombinedRepoData } from "@/lib/schemas";
+
+// Helper to convert RegistryEntryWithCategory to CombinedRepoData
+function toCombined(entry: RegistryEntryWithCategory): CombinedRepoData {
+  return {
+    ...entry,
+    status: "exists",
+    stats: {
+      fullName: entry.fullName,
+      description: entry.description,
+      stargazers_count: entry.stars || 0,
+      forks_count: entry.forks || 0,
+      watchers_count: entry.watchers || 0,
+      open_issues_count: 0,
+      pushed_at: entry.updated_at || null,
+      updated_at: entry.updated_at || null,
+      language: null,
+      topics: entry.topics || [],
+      archived: false,
+      license: entry.license || null,
+      lastFetched: Date.now(),
+    }
+  };
+}
 
 // Create query client
 const queryClient = new QueryClient({
@@ -38,7 +61,7 @@ interface FilterState {
 }
 
 interface RegistryPageProps {
-  defaultType?: "all" | "package" | "application";
+  defaultType?: "all" | "package" | "application" | "project";
   title?: string;
   description?: string;
   registryEntries?: RegistryEntryWithCategory[];
@@ -47,7 +70,7 @@ interface RegistryPageProps {
 function RegistryPageContent({ 
   defaultType = "all", 
   title = "Registry",
-  description = "Discover all Zig packages and applications",
+  description = "Discover all Zig projects",
   registryEntries = [],
 }: RegistryPageProps) {
   // Local state for filters
@@ -80,58 +103,18 @@ function RegistryPageContent({
     categoryFilter: filter.categoryFilter,
     statusFilter: filter.statusFilter,
     license: filter.license,
+    topics: filter.topics,
+    minStars: filter.minStars,
+    updatedWithin: filter.updatedWithin,
+    sort: sort,
     page: pagination.page,
     pageSize: pagination.pageSize,
   });
 
-  // Get stats for visible entries
-  const { data: entriesWithStats, isLoading: statsLoading, error: statsError } = useRegistryWithStats(
-    filteredRegistry.items,
-    true,
-    sort
-  );
-
-  // Apply stats-based filters after stats are loaded (status, minStars, updatedWithin)
-  const filteredEntriesWithStats = React.useMemo(() => {
-    let result = entriesWithStats;
-    
-    // Filter by status (exists/deleted)
-    if (filter.statusFilter && filter.statusFilter !== "all") {
-      result = result.filter(entry => entry.status === filter.statusFilter);
-    }
-    
-    // Filter by minimum stars (requires live stats)
-    if (filter.minStars && filter.minStars > 0) {
-      result = result.filter(entry => 
-        entry.stats && entry.stats.stargazers_count >= (filter.minStars || 0)
-      );
-    }
-    
-    // Filter by updated within time period (requires live stats)
-    if (filter.updatedWithin && filter.updatedWithin !== "all") {
-      const now = Date.now();
-      const cutoffMap: Record<string, number> = {
-        day: 24 * 60 * 60 * 1000,
-        week: 7 * 24 * 60 * 60 * 1000,
-        month: 30 * 24 * 60 * 60 * 1000,
-        year: 365 * 24 * 60 * 60 * 1000,
-      };
-      const cutoffMs = cutoffMap[filter.updatedWithin];
-      if (cutoffMs) {
-        result = result.filter(entry => {
-          if (!entry.stats?.pushed_at) return false;
-          const updatedAt = new Date(entry.stats.pushed_at).getTime();
-          return (now - updatedAt) <= cutoffMs;
-        });
-      }
-    }
-    
-    return result;
-  }, [entriesWithStats, filter.statusFilter, filter.minStars, filter.updatedWithin]);
-
   // Derive unique filters from registry
   const registryCategories = React.useMemo(() => getUniqueCategories(registryEntries), [registryEntries]);
   const registryLicenses = React.useMemo(() => getUniqueLicenses(registryEntries), [registryEntries]);
+  const registryTopics = React.useMemo(() => getUniqueTopics(registryEntries), [registryEntries]);
 
   // Handlers
   const handleSearch = (query: string) => {
@@ -170,7 +153,7 @@ function RegistryPageContent({
     }));
   };
 
-  const total = filteredRegistry.totalItems;
+  const total = filteredRegistry.total;
   const pageCount = filteredRegistry.totalPages;
 
   return (
@@ -216,28 +199,16 @@ function RegistryPageContent({
               licenses={registryLicenses}
               totalResults={total}
               categories={registryCategories}
+              topics={registryTopics}
             />
           </motion.div>
 
           {/* Results Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mb-8">
             <AnimatePresence mode="popLayout">
-              {statsLoading ? (
-                // Skeleton loading grid
-                Array.from({ length: Math.min(pagination.pageSize, 12) }).map((_, i) => (
-                  <motion.div
-                    key={`skeleton-${i}`}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ delay: i * 0.02 }}
-                  >
-                    <RegistryCardSkeleton />
-                  </motion.div>
-                ))
-              ) : filteredEntriesWithStats.length > 0 ? (
+              {filteredRegistry.items.length > 0 ? (
                 // Registry cards
-                filteredEntriesWithStats.map((entry, index) => (
+                filteredRegistry.items.map((entry, index) => (
                   <motion.div
                     key={entry.fullName}
                     initial={{ opacity: 0, y: 20 }}
@@ -245,7 +216,9 @@ function RegistryPageContent({
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ delay: index * 0.02 }}
                   >
-                    <RegistryCard entry={entry} />
+                    <RegistryCard 
+                      entry={toCombined(entry)} 
+                    />
                   </motion.div>
                 ))
               ) : (

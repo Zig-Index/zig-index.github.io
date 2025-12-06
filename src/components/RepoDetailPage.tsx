@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { 
   Star, 
   GitFork, 
@@ -53,29 +53,17 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "./ui/dropdown-menu";
-import { 
-  fetchRepoStatsWithCache, 
-  fetchRepoReadmeWithCache, 
-  fetchRepoReleasesWithCache,
-  fetchRepoZonWithCache,
-  fetchRepoIssuesWithCache,
-  fetchRepoCommitsWithCache,
-  initializeCache 
-} from "@/lib/cachedFetcher";
 import type { RegistryEntryWithCategory, RepoVersion, ZigDependency, RepoIssuesInfo, CommitInfo } from "@/lib/schemas";
 import CommitHistory from "./CommitHistory";
-import { useAuthStore } from "@/stores/useAuthStore";
+import MarkdownIt from 'markdown-it';
 
-// Query client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 60, // 1 hour
-      gcTime: 1000 * 60 * 60 * 24, // 24 hours
-      retry: 1,
-    },
-  },
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
 });
+
+const queryClient = new QueryClient();
 
 interface RepoDetailPageProps {
   owner: string;
@@ -146,7 +134,7 @@ function InstallationCommands({
     );
   }
 
-  // For packages, show zig fetch command
+  // For projects, show zig fetch command
   if (isPackage) {
     // If has releases/tags, use versioned URL
     // Otherwise, use main branch URL
@@ -174,7 +162,7 @@ function InstallationCommands({
     );
   }
 
-  // For applications, just show the version info (download button is elsewhere)
+  // For other projects, just show the version info (download button is elsewhere)
   return null;
 }
 
@@ -373,7 +361,7 @@ function DependenciesCard({
             ) : !minZigVersion ? (
               <div className="text-center py-3 text-muted-foreground text-sm">
                 <Package className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                <p>No dependencies</p>
+                <p>No dependencies available</p>
               </div>
             ) : null}
           </>
@@ -549,127 +537,126 @@ function formatDate(dateStr: string | null | undefined): string {
 function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
   const fullName = `${owner}/${name}`;
 
-  // Initialize IndexedDB cache on mount
-  React.useEffect(() => {
-    initializeCache();
-  }, []);
-
-  // Fetch stats with IndexedDB caching
-  const { data: statsResult, isLoading: statsLoading } = useQuery({
-    queryKey: ["repoStats", fullName],
-    queryFn: async () => {
-      const result = await fetchRepoStatsWithCache(owner, name);
-      return { 
-        stats: result.stats, 
-        status: result.status, 
-        fromCache: result.fromCache, 
-        isStale: result.isStale,
-        error: result.error 
-      };
-    },
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
-
-  // Fetch README with IndexedDB caching
-  const { data: readmeResult, isLoading: readmeLoading, refetch: refetchReadme } = useQuery({
-    queryKey: ["repoReadme", fullName],
-    queryFn: async () => {
-      const result = await fetchRepoReadmeWithCache(owner, name);
-      return { readme: result.readme, isStale: result.isStale, error: result.error };
-    },
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
-
-  // Fetch releases/tags with IndexedDB caching
-  const { data: releasesResult, isLoading: releasesLoading } = useQuery({
-    queryKey: ["repoReleases", fullName],
-    queryFn: async () => {
-      const result = await fetchRepoReleasesWithCache(owner, name);
-      return { releases: result.releases, isStale: result.isStale, error: result.error };
-    },
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
-
-  // Fetch build.zig.zon with IndexedDB caching
-  const { data: zonResult, isLoading: zonLoading } = useQuery({
-    queryKey: ["repoZon", fullName],
-    queryFn: async () => {
-      const result = await fetchRepoZonWithCache(owner, name);
-      return { zon: result.zon, isStale: result.isStale, error: result.error };
-    },
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
-
-  // Fetch issues/PR counts with IndexedDB caching
-  const { data: issuesResult, isLoading: issuesLoading } = useQuery({
-    queryKey: ["repoIssues", fullName],
-    queryFn: async () => {
-      const result = await fetchRepoIssuesWithCache(owner, name);
-      return { issues: result.issues, isStale: result.isStale, error: result.error };
-    },
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
-
-  // Fetch commits with IndexedDB caching
-  const { data: commitsResult, isLoading: commitsLoading } = useQuery({
-    queryKey: ["repoCommits", fullName],
-    queryFn: async () => {
-      const result = await fetchRepoCommitsWithCache(owner, name);
-      return { commits: result.commits, isStale: result.isStale, error: result.error };
-    },
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
-
-  const { isAuthenticated, setShowSignInDialog } = useAuthStore();
-  const statsError = statsResult?.error;
+  // Use static data from entry
+  const stats = {
+    stargazers_count: entry?.stars || 0,
+    forks_count: entry?.forks || 0,
+    watchers_count: entry?.watchers || 0,
+    open_issues_count: 0,
+    updated_at: entry?.updated_at,
+    pushed_at: entry?.updated_at,
+    language: "Zig",
+    topics: entry?.topics || [],
+    description: entry?.description,
+    license: entry?.license,
+    homepage: entry?.homepage,
+  };
   
-  // Check for rate limit errors
-  const isRateLimited = React.useMemo(() => {
-    const errors = [
-      statsResult?.error,
-      readmeResult?.error,
-      releasesResult?.error,
-      zonResult?.error,
-      issuesResult?.error,
-      commitsResult?.error
-    ];
-    
-    return errors.some(e => e && (
-      e.includes("Rate limit") || 
-      e.includes("403") || 
-      e.includes("429")
-    ));
-  }, [statsResult, readmeResult, releasesResult, zonResult, issuesResult, commitsResult]);
+  const readme = {
+    readme_html: entry?.readme ? md.render(entry.readme) : null,
+  };
+  
+  const dependencies = entry?.dependencies || [];
+  
+  const hasZon = (entry?.dependencies?.length || 0) > 0;
+  const minZigVersion = entry?.minimum_zig_version;
+  
+  const releases = { 
+    latestVersion: entry?.releases?.[0]?.tag_name || null, 
+    versions: entry?.releases?.map(r => ({
+      tag: r.tag_name,
+      name: r.name,
+      isPrerelease: r.prerelease,
+      publishedAt: r.published_at,
+      tarballUrl: `https://github.com/${owner}/${name}/archive/refs/tags/${r.tag_name}.tar.gz`,
+      zipballUrl: `https://github.com/${owner}/${name}/archive/refs/tags/${r.tag_name}.zip`,
+      assets: r.assets.map(a => ({
+        name: a.name,
+        downloadUrl: a.url,
+        size: a.size,
+        contentType: a.content_type,
+        downloadCount: 0
+      })),
+      body: r.body || undefined
+    })) || [] 
+  };
+  const versions = releases.versions;
+  const latestVersion = releases.latestVersion;
 
-  // Trigger sign in dialog on rate limit
+  const issuesInfo = { 
+    total_count: 0, 
+    open_count: 0, 
+    closed_count: 0,
+    openIssues: 0,
+    closedIssues: 0,
+    openPullRequests: 0,
+    closedPullRequests: 0
+  };
+  const [commits, setCommits] = React.useState<CommitInfo[]>([]);
+  const [commitsLoading, setCommitsLoading] = React.useState(false);
+  const [commitsError, setCommitsError] = React.useState<string | null>(null);
+  const [hasFetchedCommits, setHasFetchedCommits] = React.useState(false);
+
+  // Fetch commits automatically on mount
   React.useEffect(() => {
-    if (isRateLimited && !isAuthenticated) {
-      // Small delay to ensure UI is mounted and to avoid flashing
-      const timer = setTimeout(() => {
-        setShowSignInDialog(true);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isRateLimited, isAuthenticated, setShowSignInDialog]);
+    const fetchCommits = async () => {
+      if (hasFetchedCommits) return;
+      
+      setCommitsLoading(true);
+      setCommitsError(null);
+      try {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=10`);
+        if (!response.ok) {
+          if (response.status === 403) {
+            throw new Error("Rate limit exceeded");
+          }
+          throw new Error("Failed to fetch commits");
+        }
+        const data = await response.json();
+        const mappedCommits: CommitInfo[] = data.map((c: any) => ({
+          sha: c.sha,
+          message: c.commit.message,
+          author: {
+            name: c.commit.author.name,
+            email: c.commit.author.email,
+            date: c.commit.author.date,
+            avatarUrl: c.author?.avatar_url,
+            login: c.author?.login
+          },
+          url: c.html_url
+        }));
+        setCommits(mappedCommits);
+        setHasFetchedCommits(true);
+      } catch (err) {
+        setCommitsError(err instanceof Error ? err.message : "Failed to load commits");
+      } finally {
+        setCommitsLoading(false);
+      }
+    };
 
-  const stats = statsResult?.stats;
-  const repoStatus = statsResult?.status || "unknown";
-  const readme = readmeResult?.readme;
-  const readmeError = readmeResult?.error;
-  const releases = releasesResult?.releases;
-  const releasesError = releasesResult?.error;
-  const zon = zonResult?.zon;
-  const zonError = zonResult?.error;
-  const issuesInfo = issuesResult?.issues;
-  const issuesError = issuesResult?.error;
-  const commits = commitsResult?.commits;
-  const commitsError = commitsResult?.error;
-  const latestVersion = releases?.latestVersion;
-  const versions = releases?.versions || [];
-  const isDeleted = repoStatus === "deleted";
-  const hasZon = zon?.hasZon ?? false;
-  const dependencies = zon?.dependencies || [];
-  const minZigVersion = zon?.minZigVersion;
+    fetchCommits();
+  }, [owner, name, hasFetchedCommits]);
+
+  const repoStatus = "exists";
+  const isDeleted = false;
+  
+  const statsLoading = false;
+  const readmeLoading = false;
+  const releasesLoading = false;
+  const zonLoading = false;
+  const issuesLoading = false;
+  // const commitsLoading = false; // Replaced by state
+  
+  const statsError: string | null = null;
+  const readmeError: string | null = null;
+  const releasesError: string | null = null;
+  const zonError: string | null = null;
+  const issuesError: string | null = null;
+  // const commitsError: string | null = null; // Replaced by state
+
+  /* Removed useQuery calls */
+
+
 
   // Add copy buttons to code blocks when README loads
   React.useEffect(() => {
@@ -771,7 +758,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4 flex-wrap">
               <a href="/" className="hover:text-foreground transition-colors">Home</a>
               <span>/</span>
-              <a href="/packages" className="hover:text-foreground transition-colors">Packages</a>
+              <a href="/projects" className="hover:text-foreground transition-colors">Projects</a>
               <span>/</span>
               <span className="text-foreground break-all">{fullName}</span>
             </div>
@@ -809,6 +796,20 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                   </div>
                 )}
 
+                {/* Dependencies */}
+                {dependencies.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold mb-2">Dependencies</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {dependencies.map((dep) => (
+                        <Badge key={dep.name} variant="secondary" className="text-xs">
+                          {dep.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Min Zig Version - display prominently if available */}
                 {minZigVersion && (
                   <div className="mb-4">
@@ -819,8 +820,8 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                   </div>
                 )}
 
-                {/* Installation Command - for packages or any repo with build.zig.zon */}
-                {(displayData.type === "package" || hasZon) && (
+                {/* Installation Command - for projects or any repo with build.zig.zon */}
+                {(displayData.type === "package" || displayData.type === "project" || hasZon) && (
                   <div className="mb-4">
                     <InstallationCommands 
                       owner={owner} 
@@ -842,10 +843,10 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                       Repository Removed
                     </Badge>
                   )}
-                  {displayData.type === "package" && (
+                  {(displayData.type === "package" || displayData.type === "project") && (
                     <Badge variant="default" className="gap-1">
                       <Package className="w-3 h-3" />
-                      Package
+                      Project
                     </Badge>
                   )}
                   {displayData.type === "application" && (
@@ -870,8 +871,8 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                   )}
                 </div>
 
-                {/* Application Downloads Dropdown */}
-                {displayData.type === "application" && (
+                {/* Downloads Dropdown (Unified) */}
+                {(displayData.hasReleases || displayData.downloadUrl) && (
                   <div className="mb-4">
                     {versions.length > 0 ? (
                       (() => {
@@ -1054,15 +1055,6 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                     </a>
                   </Button>
                 )}
-                {/* Download button for packages only (applications use dropdown) */}
-                {displayData.downloadUrl && displayData.type !== "application" && (
-                  <Button variant="secondary" asChild>
-                    <a href={displayData.downloadUrl} target="_blank" rel="noopener noreferrer">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download {latestVersion ? `(${latestVersion})` : "(main)"}
-                    </a>
-                  </Button>
-                )}
               </div>
             </div>
           </div>
@@ -1120,7 +1112,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                   ) : readmeError ? (
                     <div className="text-center py-8">
                       <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-yellow-500 opacity-75" />
-                      {readmeError.includes('Rate limit') ? (
+                      {false ? (
                         <>
                           <p className="text-yellow-600 dark:text-yellow-400 font-medium mb-2">GitHub Rate Limit Exceeded</p>
                           <p className="text-sm text-muted-foreground">{readmeError}</p>
@@ -1254,10 +1246,13 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
               {/* Commit History Card */}
               <Card>
                 <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold">Recent Commits</h3>
+                  </div>
                   <CommitHistory 
                     commits={commits || []} 
                     isLoading={commitsLoading} 
-                    error={commitsError}
+                    error={commitsError || undefined}
                     repoUrl={displayData.htmlUrl}
                   />
                 </CardContent>
@@ -1299,7 +1294,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                           <span className="text-muted-foreground">·</span>
                           <span className="text-muted-foreground">{issuesInfo.closedIssues} closed</span>
                         </span>
-                      ) : issuesError?.includes('Rate limit') ? (
+                      ) : false ? (
                         <span className="ml-auto flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
                           <AlertTriangle className="w-3 h-3" />
                           Rate limited
@@ -1323,7 +1318,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                           <span className="text-muted-foreground">·</span>
                           <span className="text-muted-foreground">{issuesInfo.closedPullRequests} closed</span>
                         </span>
-                      ) : issuesError?.includes('Rate limit') ? (
+                      ) : false ? (
                         <span className="ml-auto flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
                           <AlertTriangle className="w-3 h-3" />
                           Rate limited
@@ -1367,7 +1362,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                   ) : releasesError && versions.length === 0 ? (
                     <div className="text-center py-4">
                       <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-yellow-500 opacity-75" />
-                      {releasesError.includes('Rate limit') ? (
+                      {false ? (
                         <>
                           <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">Rate Limit Exceeded</p>
                           <p className="text-xs text-muted-foreground mt-1">{releasesError}</p>
@@ -1405,7 +1400,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                 dependencies={dependencies} 
                 minZigVersion={minZigVersion}
                 isLoading={zonLoading} 
-                error={zonError}
+                error={zonError || undefined}
               />
             </div>
           </div>

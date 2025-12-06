@@ -10,8 +10,8 @@ interface NavbarState {
   setShowSuggestions: (show: boolean) => void;
   suggestions: SearchItem[];
   setSuggestions: (suggestions: SearchItem[]) => void;
-  typeFilter: "all" | "package" | "application";
-  setTypeFilter: (type: "all" | "package" | "application") => void;
+  typeFilter: "all" | "package" | "application" | "project";
+  setTypeFilter: (type: "all" | "package" | "application" | "project") => void;
   localSearch: string;
   setLocalSearch: (search: string) => void;
 }

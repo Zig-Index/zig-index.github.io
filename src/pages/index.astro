@@ -18,15 +18,15 @@ const faqItems = [
   },
   {
     question: `How do I add my Zig project to ${siteName}?`,
-    answer: "You can add your project by submitting a Pull Request to our GitHub registry repository. Create a JSON file with your project details in the appropriate folder (packages or applications) and submit it for review."
+    answer: "You can add your project by submitting a Pull Request to our GitHub registry repository. Create a JSON file with your project details in the registry folder and submit it for review."
   },
   {
     question: `Is ${siteName} free to use?`,
     answer: `Yes, ${siteName} is completely free and open source. All data is fetched from GitHub and displayed client-side for fast, privacy-respecting browsing.`
   },
   {
-    question: "What's the difference between packages and applications?",
-    answer: "Packages are reusable libraries and modules that can be imported into your Zig projects. Applications are standalone tools and software built with Zig that users can run directly."
+    question: "What types of projects are listed?",
+    answer: "Projects include reusable libraries, modules, and standalone applications built with Zig."
   },
   {
     question: "How often is the registry updated?",
@@ -89,16 +89,14 @@ const schema = {
 ---
 
 <Layout 
-  title="Zig Index - Discover Zig Packages & Applications"
-  description={`Discover ${stats.totalPackages} packages and ${stats.totalApplications} applications for the Zig programming language. The community-driven registry for quality Zig ecosystem tools.`}
-  keywords="zig, zig packages, zig libraries, zig applications, zig ecosystem, zig registry, zig modules, package manager, zig tools, zig index, ziglang"
+  title={`${siteName} | Discover Zig Packages & Applications`}
+  description="The unofficial, community-driven registry for Zig. Discover, search, and explore high-quality Zig packages, libraries, and applications. Not affiliated with the Zig Software Foundation."
+  keywords="zig packages, zig registry, zig applications, zig libraries, zig modules, zig language, zig ecosystem, zig index"
   canonicalUrl={siteUrl}
   schema={schema}
 >
   <HomePage 
     client:load 
     registryEntries={allEntries}
-    totalPackages={stats.totalPackages}
-    totalApplications={stats.totalApplications}
   />
 </Layout>

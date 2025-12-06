@@ -3,16 +3,7 @@
 import * as React from "react";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
-
-interface SearchItem {
-  name: string;
-  owner: string;
-  repo: string;
-  description: string;
-  category?: string;
-  type: "package" | "application";
-  fullName: string;
-}
+import type { SearchItem } from "@/lib/schemas";
 
 interface TermsPageProps {
   searchItems?: SearchItem[];
@@ -41,17 +32,17 @@ export function TermsPage({ searchItems = [] }: TermsPageProps) {
           <section className="mb-8 p-4 bg-muted/50 rounded-lg border">
             <h2 className="text-2xl font-semibold mb-4">Disclaimer</h2>
             <p className="text-sm text-muted-foreground">
-              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} is an independent and unofficial registry of Zig packages and applications. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All packages, libraries, and applications listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. We do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.
+              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} is an independent and unofficial registry of Zig projects. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All projects listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. We do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Description of Service</h2>
             <p>
-              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} is an unofficial, community-driven index of Zig programming language packages and applications. The service provides:
+              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} is an unofficial, community-driven index of Zig programming language projects. The service provides:
             </p>
             <ul className="list-disc pl-6">
-              <li>A searchable directory of Zig packages and applications</li>
+              <li>A searchable directory of Zig projects</li>
               <li>Repository information and documentation links</li>
               <li>Community-contributed project data</li>
               <li>Search and filtering functionality</li>
@@ -68,6 +59,21 @@ export function TermsPage({ searchItems = [] }: TermsPageProps) {
               <li>Interfere with or disrupt the Service or servers</li>
               <li>Use automated tools to access the Service without permission</li>
             </ul>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Submission via GitHub Topics</h2>
+            <p>
+              By adding the <code>zig-package</code> or <code>zig-application</code> topic to your public GitHub repository, you:
+            </p>
+            <ul className="list-disc pl-6">
+              <li>Explicitly request and authorize {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} to index and display your repository's public metadata.</li>
+              <li>Represent that you have the necessary rights to authorize this display.</li>
+              <li>Acknowledge that we may remove or delist your repository at our sole discretion if it violates these Terms or contains malicious content.</li>
+            </ul>
+            <p className="mt-4">
+              To remove your repository from the index, simply remove the relevant topic from your GitHub repository. Our system will detect the change during the next scan and remove the entry.
+            </p>
           </section>
 
           <section className="mb-8">

@@ -1,20 +1,20 @@
 # Zig Index
 
-A curated indexing registry for discovering Zig packages and applications.
+An automated indexing registry for discovering Zig projects.
 
 **[Live Site](https://zig-index.github.io)** · **[Add Your Project](https://zig-index.github.io/how-to-add)** · **[Registry](https://github.com/Zig-Index/registry)**
 
-> Your [Merged PRs](https://github.com/Zig-Index/registry/pulls) will appear on the live site within 30 minutes automatically!
+> All new projects will appear on the live site within few hours automatically!
 
-**Zig Index is an independent and unofficial registry of Zig packages and applications. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All packages, libraries, and applications listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. I do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.**
+**Zig Index is an independent and unofficial registry of Zig projects. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All projects listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. I do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.**
 
 ## Features
 
-- 📦 **Curated Registry** - Quality-focused collection of Zig projects
-- ⚡ **Fast** - Static site with on-demand GitHub stats
-- 🔍 **Search & Filter** - Find packages by topic, license, or text search
-- 💾 **Aggressive Caching** - Stats cached client-side for fast repeat visits
-- ⭐ **Live Stats** - Stars, forks, and watchers from GitHub
+- 📦 **Automated Registry** - Automatic fetching based on GitHub tags
+- ⚡ **Fast** - Fully static site with pre-built data
+- 🔍 **Search & Filter** - Find projects by topic, license, or text search
+- 🔄 **Automated Updates** - Registry data, stats, and releases updated automatically via GitHub Actions
+- ⭐ **Rich Metadata** - Stars, forks, releases, and assets fetched at build time
 - 🎨 **Dark Mode** - Beautiful light and dark themes
 - 📱 **Responsive** - Works great on all devices
 
@@ -30,7 +30,7 @@ This is the main website repository. The registry data is maintained separately:
 To add your project to Zig Index:
 
 1. Fork the [registry repository](https://github.com/Zig-Index/registry)
-2. Create a JSON file in `repositories/packages/` or `repositories/applications/`
+2. Create a JSON file in `database/username/repo-name.json`
 3. Submit a Pull Request
 
 See the [registry README](https://github.com/Zig-Index/registry) for details.

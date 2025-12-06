@@ -17,6 +17,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import type { SearchItem } from "@/lib/schemas";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -65,16 +66,6 @@ function CodeBlock({ code, language = "text" }: { code: string; language?: strin
   );
 }
 
-interface SearchItem {
-  name: string;
-  owner: string;
-  repo: string;
-  description: string;
-  category?: string;
-  type: "package" | "application";
-  fullName: string;
-}
-
 interface HowToAddPageProps {
   searchItems?: SearchItem[];
 }
@@ -106,15 +97,14 @@ export function HowToAddPage({ searchItems = [] }: HowToAddPageProps) {
               className="max-w-3xl mx-auto text-center"
             >
               <Badge variant="outline" className="mb-4 glass">
-                <BookOpen className="w-3 h-3 mr-1.5" />
-                Developer Guide
+                <Tag className="w-3 h-3 mr-1.5" />
+                Automated Discovery
               </Badge>
               <h1 className="text-4xl sm:text-5xl font-bold mb-4">
                 Add Your <span className="gradient-text">Zig Project</span>
               </h1>
               <p className="text-xl text-muted-foreground">
-                Get your Zig library or application listed on Zig Index by submitting a Pull Request.
-                It's simple, curated, and gives you full control.
+                No Pull Requests needed. Just tag your repository on GitHub, and our bot will automatically index it within the hour.
               </p>
             </motion.div>
           </div>
@@ -135,7 +125,7 @@ export function HowToAddPage({ searchItems = [] }: HowToAddPageProps) {
               animate="visible"
               className="space-y-8"
             >
-              {/* Step 1: Fork the Repo */}
+              {/* Step 1: Prepare Repo */}
               <motion.div variants={itemVariants}>
                 <Card>
                   <CardHeader>
@@ -144,36 +134,33 @@ export function HowToAddPage({ searchItems = [] }: HowToAddPageProps) {
                         1
                       </div>
                       <div>
-                        <CardTitle>Fork the Registry Repository</CardTitle>
-                        <CardDescription>Start by forking the registry repo</CardDescription>
+                        <CardTitle>Prepare Your Repository</CardTitle>
+                        <CardDescription>Ensure your project meets the basic requirements</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-muted-foreground">
-                      Zig Index uses a curated registry of JSON files. To add your project, you'll need to submit a Pull Request.
-                    </p>
-
-                    <div className="flex flex-wrap gap-4">
-                      <Button asChild title="Fork Zig Index registry on GitHub">
-                        <a href="https://github.com/Zig-Index/registry/fork" target="_blank" rel="noopener noreferrer">
-                          <Github className="w-4 h-4 mr-2" />
-                          Fork Registry
-                          <ExternalLink className="w-3 h-3 ml-2" />
-                        </a>
-                      </Button>
-                      <Button variant="outline" asChild title="View Zig Index registry on GitHub">
-                        <a href="https://github.com/Zig-Index/registry" target="_blank" rel="noopener noreferrer">
-                          View Registry
-                          <ExternalLink className="w-3 h-3 ml-2" />
-                        </a>
-                      </Button>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="p-4 border rounded-lg bg-card/50">
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          Public Repository
+                        </h4>
+                        <p className="text-sm text-muted-foreground">Your repository must be public on GitHub.</p>
+                      </div>
+                      <div className="p-4 border rounded-lg bg-card/50">
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          Zig Project
+                        </h4>
+                        <p className="text-sm text-muted-foreground">Must contain Zig code or be related to the Zig ecosystem.</p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
 
-              {/* Step 2: Create JSON File */}
+              {/* Step 2: Add Topics */}
               <motion.div variants={itemVariants}>
                 <Card>
                   <CardHeader>
@@ -182,90 +169,60 @@ export function HowToAddPage({ searchItems = [] }: HowToAddPageProps) {
                         2
                       </div>
                       <div>
-                        <CardTitle>Create a JSON Entry</CardTitle>
-                        <CardDescription>Add your project information</CardDescription>
+                        <CardTitle>Add GitHub Topics</CardTitle>
+                        <CardDescription>Add these topics to your repository's "About" section</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-muted-foreground">
-                      Create a new JSON file in the appropriate folder based on your project type:
-                    </p>
-
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="p-4 border rounded-lg bg-card hover:shadow-md transition-shadow">
-                        <h4 className="font-semibold mb-2 flex items-center gap-2">
-                          <Tag className="w-4 h-4 text-blue-500" />
-                          For Libraries/Packages
-                        </h4>
-                        <code className="text-sm bg-muted px-2 py-1 rounded block break-all">
-                          repositories/packages/your-package.json
-                        </code>
-                      </div>
-
-                      <div className="p-4 border rounded-lg bg-card hover:shadow-md transition-shadow">
-                        <h4 className="font-semibold mb-2 flex items-center gap-2">
-                          <Tag className="w-4 h-4 text-green-500" />
-                          For Applications/Tools
-                        </h4>
-                        <code className="text-sm bg-muted px-2 py-1 rounded block break-all">
-                          repositories/applications/your-app.json
-                        </code>
+                  <CardContent className="space-y-6">
+                    <div>
+                      <h3 className="font-semibold mb-2 flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-primary" />
+                        Required Topic
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-3">Add <strong>one</strong> of these to categorize your project:</p>
+                      <div className="flex flex-wrap gap-4">
+                        <div className="space-y-2">
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">For Projects</span>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-base px-3 py-1 font-mono">zig-package</Badge>
+                            <Button variant="ghost" size="icon-sm" onClick={() => navigator.clipboard.writeText('zig-package')}>
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Or</span>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-base px-3 py-1 font-mono">zig-application</Badge>
+                            <Button variant="ghost" size="icon-sm" onClick={() => navigator.clipboard.writeText('zig-application')}>
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <Tabs defaultValue="package" className="w-full">
-                      <TabsList>
-                        <TabsTrigger value="package">Package Example</TabsTrigger>
-                        <TabsTrigger value="application">Application Example</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="package" className="mt-4">
-                        <CodeBlock
-                          language="json"
-                          code={`{
-  "name": "Your Package Name",
-  "owner": "your-github-username",
-  "repo": "your-repo-name",
-  "description": "A brief description of what your package does",
-  "homepage": "https://your-docs-site.com",
-  "license": "MIT",
-  "category": "networking"
-}`}
-                        />
-                      </TabsContent>
-                      <TabsContent value="application" className="mt-4">
-                        <CodeBlock
-                          language="json"
-                          code={`{
-  "name": "Your Application Name",
-  "owner": "your-github-username",
-  "repo": "your-repo-name",
-  "description": "A brief description of what your application does",
-  "homepage": "https://your-app-website.com",
-  "license": "GPL-3.0",
-  "category": "development-tools"
-}`}
-                        />
-                      </TabsContent>
-                    </Tabs>
+                    <div className="h-px bg-border" />
 
-                    <div className="bg-muted/50 p-4 rounded-lg">
-                      <h4 className="font-semibold mb-2">JSON Schema Fields:</h4>
-                      <ul className="space-y-1 text-sm text-muted-foreground">
-                        <li><strong>name</strong> (required): Display name for your project</li>
-                        <li><strong>owner</strong> (required): GitHub username or organization</li>
-                        <li><strong>repo</strong> (required): Repository name (without owner)</li>
-                        <li><strong>description</strong> (required): Short description (max 200 chars recommended)</li>
-                        <li><strong>homepage</strong> (optional): Documentation or website URL</li>
-                        <li><strong>license</strong> (optional): License identifier (MIT, GPL-3.0, etc.)</li>
-                        <li><strong>category</strong> (optional): Category for filtering (e.g., gui, networking, game-engine, database, etc.)</li>
-                      </ul>
+                    <div>
+                      <h3 className="font-semibold mb-2 flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-blue-500" />
+                        Optional Topic
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-3">You can optionally add this topic to show support:</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-base px-3 py-1 font-mono">zig-index</Badge>
+                        <Button variant="ghost" size="icon-sm" onClick={() => navigator.clipboard.writeText('zig-index')}>
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
 
-              {/* Step 3: Submit PR */}
+              {/* Step 3: Wait */}
               <motion.div variants={itemVariants}>
                 <Card>
                   <CardHeader>
@@ -274,45 +231,34 @@ export function HowToAddPage({ searchItems = [] }: HowToAddPageProps) {
                         3
                       </div>
                       <div>
-                        <CardTitle>Submit a Pull Request</CardTitle>
-                        <CardDescription>Get your project reviewed and merged</CardDescription>
+                        <CardTitle>Wait for Indexing</CardTitle>
+                        <CardDescription>Our bot scans GitHub every hour</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-muted-foreground">
-                      Create a Pull Request with your new JSON file. A maintainer will review it 
-                      to ensure your project meets the quality guidelines.
-                    </p>
-
-                    <div className="bg-muted/50 p-4 rounded-lg">
-                      <h4 className="font-semibold mb-2">PR Checklist:</h4>
-                      <ul className="space-y-2 text-sm text-muted-foreground">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                          <span>JSON file is valid and follows the schema</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                          <span>Repository exists and is publicly accessible</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                          <span>Project is related to Zig programming language</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                          <span>Has a README with description and usage</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                          <span>Has a license file</span>
-                        </li>
-                      </ul>
+                  <CardContent>
+                    <div className="bg-muted/30 rounded-lg p-6 border border-dashed">
+                      <div className="flex items-start gap-4">
+                        <div className="p-2 rounded-full bg-primary/10 text-primary mt-1">
+                          <Github className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-1">What happens next?</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            The bot will fetch your repository details, README, releases, and dependency information (from <code>build.zig.zon</code>).
+                            It will then generate a JSON entry in the registry.
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <CheckCircle className="w-3 h-3 text-green-500" />
+                            <span>Updates automatically when you push changes</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
+
 
               {/* Step 4: Write a Good README */}
               <motion.div variants={itemVariants}>
@@ -330,7 +276,7 @@ export function HowToAddPage({ searchItems = [] }: HowToAddPageProps) {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-muted-foreground">
-                      A well-written README helps users understand what your package does 
+                      A well-written README helps users understand what your project does 
                       and how to use it. Include these sections:
                     </p>
 
@@ -342,7 +288,7 @@ export function HowToAddPage({ searchItems = [] }: HowToAddPageProps) {
                       <TabsContent value="template" className="mt-4">
                         <CodeBlock
                           language="markdown"
-                          code={`# Your Package Name
+                          code={`# Your Project Name
 
 Short description of what your package does.
 
@@ -428,14 +374,8 @@ MIT License - see LICENSE file for details.`}
 
                     <div className="flex flex-wrap gap-4">
                       <Button variant="secondary" asChild>
-                        <a href="/packages">
-                          Browse Packages
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </a>
-                      </Button>
-                      <Button variant="secondary" asChild>
-                        <a href="/applications">
-                          Browse Applications
+                        <a href="/projects">
+                          Browse Projects
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </a>
                       </Button>
@@ -460,7 +400,7 @@ MIT License - see LICENSE file for details.`}
                 <CardContent>
                   <p className="text-muted-foreground">
                     The simplest way to discover quality Zig packages and applications.
-                    We provide a curated registry, live GitHub stats with smart caching, 
+                    We provide an automated registry, live GitHub stats with smart caching, 
                     powerful search, and a community-driven contribution process.
                   </p>
                 </CardContent>
@@ -472,8 +412,8 @@ MIT License - see LICENSE file for details.`}
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    Once your PR is reviewed and merged, your project will appear immediately after 
-                    the site is rebuilt. This usually takes just a few minutes.
+                    Our bot scans GitHub every hour. Once you add the required topic, 
+                    your project should appear in the next indexing cycle.
                   </p>
                 </CardContent>
               </Card>
@@ -484,8 +424,8 @@ MIT License - see LICENSE file for details.`}
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    Yes! Simply submit another PR to update your JSON file. You can change the description,
-                    topics, homepage, or any other field.
+                    Yes! Just update your GitHub repository (description, topics, README). 
+                    The bot will automatically detect changes and update the registry.
                   </p>
                 </CardContent>
               </Card>
@@ -496,21 +436,8 @@ MIT License - see LICENSE file for details.`}
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    Yes! Submit a PR to delete your JSON file from the registry. 
-                    The change will take effect after the PR is merged.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Why do I need to submit a PR?</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    The PR-based system ensures quality control and prevents spam. It also gives you 
-                    full control over how your project is described and categorized. The curated approach 
-                    keeps the registry focused on high-quality Zig projects.
+                    Yes! Simply remove the <code>zig-package</code> or <code>zig-application</code> topic 
+                    from your GitHub repository. The bot will remove it from the registry in the next cycle.
                   </p>
                 </CardContent>
               </Card>
@@ -523,7 +450,7 @@ MIT License - see LICENSE file for details.`}
                   <p className="text-muted-foreground">
                     Live stats are fetched from GitHub's API when users view the registry. 
                     This data is cached locally for performance. Your project's basic info (name, description) 
-                    comes from the registry JSON file you submitted.
+                    is synced from your GitHub repository.
                   </p>
                 </CardContent>
               </Card>

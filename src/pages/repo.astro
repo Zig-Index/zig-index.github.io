@@ -16,7 +16,7 @@ const schema = {
       "@type": "WebPage",
       "@id": `${siteUrl}/repo#webpage`,
       "name": "Repository Details | Zig Index",
-      "description": "View detailed information about Zig packages and applications including stats, README, dependencies, and installation instructions.",
+      "description": "View detailed information about Zig projects including stats, README, dependencies, and installation instructions.",
       "url": `${siteUrl}/repo`,
       "isPartOf": {
         "@id": `${siteUrl}/#website`
@@ -45,8 +45,8 @@ const schema = {
     },
     {
       "@type": "SoftwareSourceCode",
-      "name": "Zig Package Details",
-      "description": "Detailed view of a Zig package or application with stats, README, dependencies, and installation commands.",
+      "name": "Zig Project Details",
+      "description": "Detailed view of a Zig project with stats, README, dependencies, and installation commands.",
       "programmingLanguage": {
         "@type": "ComputerLanguage",
         "name": "Zig"
@@ -58,8 +58,8 @@ const schema = {
 
 <Layout 
   title="Repository Details | Zig Index"
-  description={`View detailed information about Zig packages and applications. Browse ${stats.totalEntries} projects with stats, README, dependencies, installation commands, and more.`}
-  keywords="zig package details, zig repository, zig project info, zig dependencies, zig installation, github zig, zig index, build.zig.zon, zig fetch"
+  description={`View detailed information about Zig projects. Browse ${stats.totalEntries} projects with stats, README, dependencies, installation commands, and more.`}
+  keywords="zig project details, zig repository, zig project info, zig dependencies, zig installation, github zig, zig index, build.zig.zon, zig fetch"
   canonicalUrl={`${siteUrl}/repo`}
   schema={schema}
 >

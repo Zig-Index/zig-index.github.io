@@ -183,7 +183,7 @@ const CommitHistory = memo(function CommitHistory({ commits, isLoading, error, r
       <div className="space-y-4 relative">
         <h4 className="text-sm font-medium text-muted-foreground">Recent Activity</h4>
         {/* Vertical line connecting commits */}
-        <div className="absolute left-[7px] top-8 bottom-2 w-[2px] bg-border" />
+        <div className="absolute left-[7px] top-8 bottom-2 w-0.5 bg-border" />
         
         {commits.slice(0, 5).map((commit) => (
           <div key={commit.sha} className="relative pl-6 group">

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { 
   Users, 
   GitFork,
@@ -32,23 +31,8 @@ import { Separator } from "./ui/separator";
 import { Skeleton } from "./ui/skeleton";
 import { ScrollArea } from "./ui/scroll-area";
 import { EmptyState } from "./SyncStatus";
-import { 
-  fetchUserProfileWithCache, 
-  initializeCache 
-} from "@/lib/cachedFetcher";
-import type { UserProfile, RegistryEntryWithCategory } from "@/lib/schemas";
+import type { RegistryEntryWithCategory } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
-
-// Query client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 60, // 1 hour
-      gcTime: 1000 * 60 * 60 * 24, // 24 hours
-      retry: 1,
-    },
-  },
-});
 
 interface UserProfilePageProps {
   username: string;
@@ -77,7 +61,7 @@ function formatDate(dateStr: string | null | undefined): string {
 
 // Mini repo card for user's packages/applications
 function MiniRepoCard({ entry }: { entry: RegistryEntryWithCategory }) {
-  const CategoryIcon = entry.type === "package" ? Package : Cpu;
+  const CategoryIcon = (entry.type === "package" || entry.type === "project") ? Package : Cpu;
   const cardUrl = `/repo?owner=${encodeURIComponent(entry.owner)}&name=${encodeURIComponent(entry.repo)}`;
 
   return (
@@ -98,7 +82,7 @@ function MiniRepoCard({ entry }: { entry: RegistryEntryWithCategory }) {
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-medium text-sm truncate">{entry.name}</span>
                 <Badge variant="outline" className="text-xs shrink-0">
-                  {entry.type === "package" ? "Package" : "App"}
+                  {(entry.type === "package" || entry.type === "project") ? "Project" : "App"}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground line-clamp-2">
@@ -131,27 +115,10 @@ function StatItem({ icon: Icon, label, value }: { icon: React.ElementType; label
 }
 
 function UserProfilePageContent({ username, registryEntries = [] }: UserProfilePageProps) {
-  // Initialize IndexedDB cache on mount
-  React.useEffect(() => {
-    initializeCache();
-  }, []);
-
-  // Fetch user profile with IndexedDB caching
-  const { data: userResult, isLoading: userLoading, error: userError } = useQuery({
-    queryKey: ["userProfile", username],
-    queryFn: async () => {
-      const result = await fetchUserProfileWithCache(username);
-      return { user: result.user, fromCache: result.fromCache, isStale: result.isStale, error: result.error };
-    },
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
-
-  const user = userResult?.user;
-
   // Filter registry entries by this user
   const userPackages = React.useMemo(() => {
     return registryEntries.filter(
-      e => e.owner.toLowerCase() === username.toLowerCase() && e.type === "package"
+      e => e.owner.toLowerCase() === username.toLowerCase() && (e.type === "package" || e.type === "project")
     );
   }, [registryEntries, username]);
 
@@ -161,95 +128,99 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
     );
   }, [registryEntries, username]);
 
-  // Update document title and meta tags when user profile loads
+  // Derive user info from entries
+  const user = React.useMemo(() => {
+    const allEntries = [...userPackages, ...userApplications];
+    if (allEntries.length === 0) return null;
+    
+    const firstEntry = allEntries[0];
+    const totalStars = allEntries.reduce((acc, entry) => acc + (entry.stars || 0), 0);
+
+    return {
+      name: firstEntry.owner,
+      login: firstEntry.owner,
+      avatarUrl: firstEntry.owner_avatar_url,
+      htmlUrl: `https://github.com/${firstEntry.owner}`,
+      bio: firstEntry.owner_bio,
+      company: firstEntry.owner_company,
+      location: firstEntry.owner_location,
+      email: null,
+      blog: firstEntry.owner_blog,
+      twitterUsername: firstEntry.owner_twitter_username,
+      followers: firstEntry.owner_followers || 0,
+      following: firstEntry.owner_following || 0,
+      publicRepos: firstEntry.owner_public_repos || 0,
+      totalStars: totalStars,
+      createdAt: firstEntry.owner_created_at,
+    };
+  }, [userPackages, userApplications]);
+
+  // Update document title and meta tags
   React.useEffect(() => {
-    if (user) {
-      const displayName = user.name || username;
-      const totalContributions = userPackages.length + userApplications.length;
-      
-      // Update page title
-      document.title = `${displayName} (@${username}) - Zig Developer Profile | Zig Index`;
-      
-      // Update meta description
-      const metaDescription = document.querySelector('meta[name="description"]');
-      if (metaDescription) {
-        const desc = user.bio 
-          ? `${displayName} - ${user.bio}. Contributor of ${totalContributions} Zig packages and applications.`
-          : `${displayName} is a Zig developer with ${totalContributions} contributions to the Zig ecosystem. View their packages, applications, and GitHub activity.`;
-        metaDescription.setAttribute('content', desc);
-      }
-      
-      // Update Open Graph tags
-      const ogTitle = document.querySelector('meta[property="og:title"]');
-      if (ogTitle) {
-        ogTitle.setAttribute('content', `${displayName} (@${username}) - Zig Developer | Zig Index`);
-      }
-      
-      const ogDescription = document.querySelector('meta[property="og:description"]');
-      if (ogDescription) {
-        const desc = user.bio || `View ${displayName}'s Zig packages, applications, and contributions to the Zig ecosystem.`;
-        ogDescription.setAttribute('content', desc);
-      }
-      
-      const ogUrl = document.querySelector('meta[property="og:url"]');
-      if (ogUrl) {
-        ogUrl.setAttribute('content', `https://zig-index.github.io/u?username=${encodeURIComponent(username)}`);
-      }
-      
-      const ogImage = document.querySelector('meta[property="og:image"]');
-      if (ogImage && user.avatarUrl) {
-        ogImage.setAttribute('content', user.avatarUrl);
-      }
-      
-      // Update Twitter tags
-      const twitterTitle = document.querySelector('meta[name="twitter:title"]');
-      if (twitterTitle) {
-        twitterTitle.setAttribute('content', `${displayName} (@${username}) - Zig Developer | Zig Index`);
-      }
-      
-      const twitterDescription = document.querySelector('meta[name="twitter:description"]');
-      if (twitterDescription) {
-        const desc = user.bio || `View ${displayName}'s Zig packages and contributions.`;
-        twitterDescription.setAttribute('content', desc);
-      }
-      
-      // Update canonical URL
-      const canonical = document.querySelector('link[rel="canonical"]');
-      if (canonical) {
-        canonical.setAttribute('href', `https://zig-index.github.io/u?username=${encodeURIComponent(username)}`);
-      }
-    } else {
-      // Set title for loading/not found states
-      document.title = `@${username} - Developer Profile | Zig Index`;
+    const displayName = user?.name || username;
+    const totalContributions = userPackages.length + userApplications.length;
+    
+    // Update page title
+    document.title = `${displayName} (@${username}) - Zig Developer Profile | Zig Index`;
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      const desc = `${displayName} is a Zig developer with ${totalContributions} contributions to the Zig ecosystem. View their projects, applications, and GitHub activity.`;
+      metaDescription.setAttribute('content', desc);
+    }
+    
+    // Update Open Graph tags
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      ogTitle.setAttribute('content', `${displayName} (@${username}) - Zig Developer | Zig Index`);
+    }
+    
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) {
+      const desc = `View ${displayName}'s Zig projects, applications, and contributions to the Zig ecosystem.`;
+      ogDescription.setAttribute('content', desc);
+    }
+    
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) {
+      ogUrl.setAttribute('content', `https://zig-index.github.io/u?username=${encodeURIComponent(username)}`);
+    }
+    
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage && user?.avatarUrl) {
+      ogImage.setAttribute('content', user.avatarUrl);
+    }
+    
+    // Update Twitter tags
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) {
+      twitterTitle.setAttribute('content', `${displayName} (@${username}) - Zig Developer | Zig Index`);
+    }
+    
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) {
+      const desc = `View ${displayName}'s Zig projects and contributions.`;
+      twitterDescription.setAttribute('content', desc);
+    }
+    
+    // Update canonical URL
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) {
+      canonical.setAttribute('href', `https://zig-index.github.io/u?username=${encodeURIComponent(username)}`);
     }
   }, [user, username, userPackages.length, userApplications.length]);
 
-  // Loading state
-  if (userLoading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 mesh-gradient">
-          <UserHeaderSkeleton />
-          <UserContentSkeleton />
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Error state
-  if (userError || (!user && userResult?.error)) {
-    const errorMsg = userResult?.error || `Could not find GitHub user "${username}"`;
-    const isRateLimit = errorMsg.includes('Rate limit');
+  // If no user found (no packages), show empty state
+  if (!user) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 container mx-auto px-4 py-16">
           <EmptyState
             icon={<User className="w-12 h-12" />}
-            title={isRateLimit ? "GitHub Rate Limit Exceeded" : "User Not Found"}
-            description={errorMsg}
+            title="User Not Found in Registry"
+            description={`Could not find any projects or applications for "${username}" in the registry.`}
             action={{
               label: "Go to Home",
               onClick: () => window.location.href = "/",
@@ -321,26 +292,69 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold wrap-break-word">
                     {user?.name || username}
                   </h1>
-                  {user?.hireable && (
-                    <Badge className="w-fit mx-auto lg:mx-0">Available for hire</Badge>
-                  )}
                 </div>
                 
                 <p className="text-base sm:text-lg text-muted-foreground mb-4">
                   @{username}
                 </p>
 
-                {user?.bio && (
-                  <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-2xl wrap-break-word">
+                {user.bio && (
+                  <p className="text-muted-foreground max-w-2xl mb-6 mx-auto lg:mx-0">
                     {user.bio}
                   </p>
                 )}
 
+                {/* User Metadata */}
+                <div className="flex flex-wrap justify-center lg:justify-start gap-x-6 gap-y-2 text-sm text-muted-foreground mb-6">
+                  {user.company && (
+                    <div className="flex items-center gap-1.5">
+                      <Building className="w-4 h-4" />
+                      <span>{user.company}</span>
+                    </div>
+                  )}
+                  {user.location && (
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4" />
+                      <span>{user.location}</span>
+                    </div>
+                  )}
+                  {user.blog && (
+                    <a 
+                      href={user.blog.startsWith('http') ? user.blog : `https://${user.blog}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 hover:text-primary transition-colors"
+                    >
+                      <LinkIcon className="w-4 h-4" />
+                      <span>Website</span>
+                    </a>
+                  )}
+                  {user.twitterUsername && (
+                    <a 
+                      href={`https://twitter.com/${user.twitterUsername}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 hover:text-primary transition-colors"
+                    >
+                      <Twitter className="w-4 h-4" />
+                      <span>@{user.twitterUsername}</span>
+                    </a>
+                  )}
+                  {user.createdAt && (
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4" />
+                      <span>Joined {formatDate(user.createdAt)}</span>
+                    </div>
+                  )}
+                </div>
+
                 {/* Quick Stats */}
                 <div className="flex flex-wrap justify-center lg:justify-start gap-6 sm:gap-8">
-                  <StatItem icon={Users} label="Followers" value={user?.followers ?? 0} />
-                  <StatItem icon={Users} label="Following" value={user?.following ?? 0} />
-                  <StatItem icon={BookOpen} label="Repositories" value={user?.publicRepos ?? 0} />
+                  <StatItem icon={Users} label="Followers" value={user.followers} />
+                  <StatItem icon={Users} label="Following" value={user.following} />
+                  <StatItem icon={Star} label="Total Stars" value={user.totalStars} />
+                  <StatItem icon={Package} label="Projects" value={userPackages.length} />
+                  <StatItem icon={Cpu} label="Applications" value={userApplications.length} />
                 </div>
               </div>
 
@@ -358,19 +372,6 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </Button>
-                {user?.blog && (
-                  <Button variant="outline" asChild>
-                    <a
-                      href={user.blog.startsWith("http") ? user.blog : `https://${user.blog}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2"
-                    >
-                      <LinkIcon className="w-4 h-4" />
-                      Website
-                    </a>
-                  </Button>
-                )}
               </div>
             </motion.div>
           </div>
@@ -380,31 +381,7 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
         <section className="container mx-auto px-4 py-8 relative z-10">
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Left Column - Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* User README (if available) */}
-              {user?.readmeHtml && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <FileText className="w-5 h-5" />
-                        README.md
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div
-                        className="prose dark:prose-invert prose-sm max-w-none"
-                        dangerouslySetInnerHTML={{ __html: user.readmeHtml }}
-                      />
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-
+            <div className="lg:col-span-3 space-y-6">
               {/* User's Zig Packages */}
               {userPackages.length > 0 && (
                 <motion.div
@@ -416,17 +393,17 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Package className="w-5 h-5" />
-                        Zig Packages
+                        Zig Projects
                         <Badge variant="secondary" className="ml-auto">
                           {userPackages.length}
                         </Badge>
                       </CardTitle>
                       <CardDescription>
-                        Packages maintained by {user?.name || username}
+                        Projects maintained by {user?.name || username}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {userPackages.map((pkg) => (
                           <MiniRepoCard key={pkg.fullName} entry={pkg} />
                         ))}
@@ -457,7 +434,7 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {userApplications.map((app) => (
                           <MiniRepoCard key={app.fullName} entry={app} />
                         ))}
@@ -466,156 +443,6 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
                   </Card>
                 </motion.div>
               )}
-
-              {/* No Zig projects message */}
-              {userPackages.length === 0 && userApplications.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Card>
-                    <CardContent className="py-12">
-                      <div className="text-center text-muted-foreground">
-                        <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                        <p className="text-lg font-medium mb-2">No Zig Projects Found</p>
-                        <p className="text-sm">
-                          {user?.name || username} doesn't have any Zig packages or applications in the registry yet.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-            </div>
-
-            {/* Right Column - Sidebar */}
-            <div className="space-y-6">
-              {/* User Info Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <User className="w-4 h-4" />
-                      About
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {user?.company && (
-                      <div className="flex items-center gap-3 text-sm">
-                        <Building className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <span className="truncate">{user.company}</span>
-                      </div>
-                    )}
-                    {user?.location && (
-                      <div className="flex items-center gap-3 text-sm">
-                        <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <span className="truncate">{user.location}</span>
-                      </div>
-                    )}
-                    {user?.email && (
-                      <div className="flex items-center gap-3 text-sm">
-                        <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <a href={`mailto:${user.email}`} className="truncate hover:text-primary transition-colors">
-                          {user.email}
-                        </a>
-                      </div>
-                    )}
-                    {user?.blog && (
-                      <div className="flex items-center gap-3 text-sm">
-                        <LinkIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <a 
-                          href={user.blog.startsWith("http") ? user.blog : `https://${user.blog}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="truncate hover:text-primary transition-colors"
-                        >
-                          {user.blog.replace(/^https?:\/\//, "")}
-                        </a>
-                      </div>
-                    )}
-                    {user?.twitterUsername && (
-                      <div className="flex items-center gap-3 text-sm">
-                        <Twitter className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <a 
-                          href={`https://twitter.com/${user.twitterUsername}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="truncate hover:text-primary transition-colors"
-                        >
-                          @{user.twitterUsername}
-                        </a>
-                      </div>
-                    )}
-                    <Separator />
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4 shrink-0" />
-                      <span>Joined {formatDate(user?.createdAt)}</span>
-                    </div>
-                    {user && user.publicGists > 0 && (
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <FileText className="w-4 h-4 shrink-0" />
-                        <span>{formatNumber(user.publicGists)} public gists</span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Quick Links */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <LinkIcon className="w-4 h-4" />
-                      Links
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start" asChild>
-                      <a
-                        href={`https://github.com/${username}?tab=repositories`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <BookOpen className="w-4 h-4 mr-2" />
-                        All Repositories
-                        <ExternalLink className="w-3 h-3 ml-auto" />
-                      </a>
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start" asChild>
-                      <a
-                        href={`https://github.com/${username}?tab=stars`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Star className="w-4 h-4 mr-2" />
-                        Starred Repos
-                        <ExternalLink className="w-3 h-3 ml-auto" />
-                      </a>
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start" asChild>
-                      <a
-                        href={`https://github.com/${username}?tab=followers`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Users className="w-4 h-4 mr-2" />
-                        Followers
-                        <ExternalLink className="w-3 h-3 ml-auto" />
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
             </div>
           </div>
         </section>
@@ -625,83 +452,9 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
   );
 }
 
-// Skeleton components
-function UserHeaderSkeleton() {
-  return (
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-linear-to-br from-primary/20 via-purple-500/10 to-blue-500/15" />
-      </div>
-      <div className="container mx-auto px-4 py-8 sm:py-12 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-4 sm:gap-8">
-          <Skeleton className="w-24 h-24 sm:w-36 sm:h-36 rounded-full shrink-0" />
-          <div className="flex-1 text-center lg:text-left w-full">
-            <Skeleton className="h-8 sm:h-10 w-32 sm:w-48 mx-auto lg:mx-0 mb-2" />
-            <Skeleton className="h-5 sm:h-6 w-24 sm:w-32 mx-auto lg:mx-0 mb-3 sm:mb-4" />
-            <Skeleton className="h-4 sm:h-5 w-full max-w-[280px] sm:max-w-md mx-auto lg:mx-0 mb-4 sm:mb-6" />
-            <div className="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-8">
-              <Skeleton className="h-12 sm:h-14 w-20 sm:w-24" />
-              <Skeleton className="h-12 sm:h-14 w-20 sm:w-24" />
-              <Skeleton className="h-12 sm:h-14 w-20 sm:w-24" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function UserContentSkeleton() {
-  return (
-    <section className="container mx-auto px-4 py-6 sm:py-8">
-      <div className="grid lg:grid-cols-3 gap-4 sm:gap-8">
-        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-          <Card>
-            <CardHeader className="pb-2 sm:pb-6">
-              <Skeleton className="h-5 sm:h-6 w-36 sm:w-48" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-[100px] sm:h-[150px] w-full" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2 sm:pb-6">
-              <Skeleton className="h-5 sm:h-6 w-24 sm:w-32" />
-            </CardHeader>
-            <CardContent className="space-y-2 sm:space-y-3">
-              <Skeleton className="h-16 sm:h-20 w-full" />
-              <Skeleton className="h-16 sm:h-20 w-full" />
-            </CardContent>
-          </Card>
-        </div>
-        <div className="space-y-4 sm:space-y-6 order-first lg:order-last">
-          <Card>
-            <CardHeader className="pb-2 sm:pb-6">
-              <Skeleton className="h-5 sm:h-6 w-16 sm:w-20" />
-            </CardHeader>
-            <CardContent className="space-y-3 sm:space-y-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-3 sm:h-4 w-28 sm:w-32" />
-              </div>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-3 sm:h-4 w-24 sm:w-28" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// Wrapped with QueryClientProvider
 export function UserProfilePage({ username, registryEntries = [] }: UserProfilePageProps) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <UserProfilePageContent username={username} registryEntries={registryEntries} />
-    </QueryClientProvider>
+    <UserProfilePageContent username={username} registryEntries={registryEntries} />
   );
 }
 

@@ -40,6 +40,7 @@ interface FiltersProps {
   licenses: { key: string; name: string }[];
   totalResults: number;
   categories?: string[];
+  topics?: string[];
 }
 
 export function Filters({
@@ -50,6 +51,7 @@ export function Filters({
   licenses,
   totalResults,
   categories = [],
+  topics = [],
 }: FiltersProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [localFilter, setLocalFilter] = React.useState(filter);
@@ -61,6 +63,7 @@ export function Filters({
     let count = 0;
     if (filter.search) count++;
     if (filter.categoryFilter) count++;
+    if (filter.topics && filter.topics.length > 0) count++;
     if (filter.statusFilter && filter.statusFilter !== "all") count++;
     if (filter.minStars && filter.minStars > 0) count++;
     if (filter.license) count++;
@@ -140,7 +143,7 @@ export function Filters({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search packages, applications..."
+              placeholder="Search projects..."
               value={searchInput}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10 pr-8 w-full"
@@ -290,6 +293,31 @@ export function Filters({
                 </div>
               )}
 
+              {/* Topic Filter */}
+              {topics.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Topic</Label>
+                  <Select
+                    value={localFilter.topics?.[0] || "all"}
+                    onValueChange={(value) => 
+                      setLocalFilter({ ...localFilter, topics: value === "all" ? undefined : [value] })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All topics" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Topics</SelectItem>
+                      {topics.map((topic) => (
+                        <SelectItem key={topic} value={topic}>
+                          {topic}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               {/* Status Filter - Show deleted/exists repos */}
               <div className="space-y-2">
                 <Label>Repository Status</Label>
@@ -399,6 +427,19 @@ export function Filters({
               className="ml-1 hover:text-destructive"
               title="Remove category filter"
               aria-label="Remove category filter"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </Badge>
+        )}
+        {filter.topics && filter.topics.length > 0 && (
+          <Badge variant="secondary" className="gap-1">
+            Topic: {filter.topics[0]}
+            <button
+              onClick={() => onFilterChange({ ...filter, topics: undefined })}
+              className="ml-1 hover:text-destructive"
+              title="Remove topic filter"
+              aria-label="Remove topic filter"
             >
               <X className="w-3 h-3" />
             </button>

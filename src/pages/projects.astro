@@ -1,0 +1,52 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { RegistryPage } from "../components/RegistryPage";
+import { loadRegistryData, getRegistryStats } from "../lib/registryLoader";
+
+// Load all projects at build time
+const projects = await loadRegistryData();
+const stats = getRegistryStats(projects);
+
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://zig-index.github.io";
+const siteName = import.meta.env.PUBLIC_SITE_NAME || "Zig Index";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Zig Projects",
+  "description": `Browse ${stats.totalEntries} Zig projects.`,
+  "url": `${siteUrl}/projects`,
+  "mainEntity": {
+    "@type": "ItemList",
+    "numberOfItems": stats.totalEntries,
+    "itemListElement": projects.slice(0, 10).map((proj, i) => ({
+      "@type": "ListItem",
+      "position": i + 1,
+      "item": {
+        "@type": "SoftwareSourceCode",
+        "name": proj.name,
+        "description": proj.description,
+        "codeRepository": proj.htmlUrl,
+        "programmingLanguage": "Zig",
+        "applicationCategory": proj.type === 'application' ? 'Application' : 'Library'
+      }
+    }))
+  }
+};
+---
+
+<Layout 
+  title={`Zig Projects | ${siteName}`}
+  description={`Browse ${stats.totalEntries} Zig projects. Find libraries, modules, and applications for your Zig development.`}
+  keywords="zig projects, zig packages, zig applications, zig libraries, zig modules, zig code, zig dependencies, zig ecosystem, zig index"
+  canonicalUrl={`${siteUrl}/projects`}
+  schema={schema}
+>
+  <RegistryPage 
+    client:load 
+    registryEntries={projects}
+    defaultType="all"
+    title="Zig Projects"
+    description={`${stats.totalEntries} projects for Zig development`}
+  />
+</Layout>

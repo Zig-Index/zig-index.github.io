@@ -2,20 +2,12 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Package, Cpu, Terminal, Star, GitFork, Zap, Database, Wifi, Search } from "lucide-react";
+import { ArrowRight, Package, Terminal, Star, GitFork, Zap, Database, Search, Wifi } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
-import { AnimatedCounter } from "./AnimatedCounter";
 
-interface HeroProps {
-  stats?: {
-    totalRepos: number;
-    totalPackages: number;
-    totalApplications: number;
-    lastUpdated: number;
-  };
-}
+interface HeroProps {}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -44,7 +36,7 @@ const floatingVariants = {
   },
 };
 
-export function Hero({ stats }: HeroProps) {
+export function Hero({}: HeroProps) {
   return (
     <section className="relative overflow-hidden mesh-gradient hero-gradient min-h-[calc(100vh-4rem)] flex items-center py-12 sm:py-16">
       {/* Animated blob background */}
@@ -70,7 +62,7 @@ export function Hero({ stats }: HeroProps) {
           <motion.div variants={itemVariants} className="mb-6">
             <Badge variant="outline" className="px-4 py-1.5 text-sm">
               <Zap className="w-3 h-3 mr-1.5" />
-              Community-Driven • Curated • Open Source
+              Community-Driven • Automated Discovery • Open Source
             </Badge>
           </motion.div>
 
@@ -82,7 +74,7 @@ export function Hero({ stats }: HeroProps) {
             Discover the Best{" "}
             <span className="relative inline-block">
               <span className="gradient-text">
-                Zig Packages
+                Zig Projects
               </span>
               <motion.span
                 className="absolute -bottom-2 left-0 right-0 h-1 bg-linear-to-r from-primary via-purple-500 to-primary rounded-full"
@@ -98,8 +90,9 @@ export function Hero({ stats }: HeroProps) {
             variants={itemVariants}
             className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
           >
-            Zig Index uses GitHub to host your projects and packages. We simply index and fetch the details to display them here.
-            Add your project via Pull Request to join our community-driven collection.
+            The central registry for Zig projects. 
+            Automatically indexed from GitHub to help you build faster.
+  
           </motion.p>
 
           {/* CTA Buttons */}
@@ -107,54 +100,19 @@ export function Hero({ stats }: HeroProps) {
             variants={itemVariants}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
           >
-            <Button size="lg" asChild className="min-w-[180px]" title="Browse all Zig packages">
-              <a href="/packages">
+            <Button size="lg" asChild className="min-w-[180px]" title="Browse all Zig projects">
+              <a href="/projects">
                 <Search className="w-4 h-4 mr-2" />
-                Browse Packages
+                Browse Projects
               </a>
             </Button>
             <Button size="lg" variant="outline" asChild className="min-w-[180px]" title="Learn how to add your project">
               <a href="/how-to-add">
-                Add Your Package
+                Add Your Project
                 <ArrowRight className="w-4 h-4 ml-2" />
               </a>
             </Button>
           </motion.div>
-
-          {/* Stats */}
-          {stats && (
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-wrap items-center justify-center gap-4 sm:gap-8"
-            >
-              <motion.div 
-                className="flex items-center gap-3 px-6 py-3 rounded-lg bg-card/80 backdrop-blur-sm border glass hover-lift cursor-default"
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <Package className="w-6 h-6 text-blue-500" />
-                <div className="text-left">
-                  <span className="text-2xl font-bold block">
-                    <AnimatedCounter value={stats.totalPackages} duration={2} />
-                  </span>
-                  <span className="text-xs text-muted-foreground">Packages</span>
-                </div>
-              </motion.div>
-              <motion.div 
-                className="flex items-center gap-3 px-6 py-3 rounded-lg bg-card/80 backdrop-blur-sm border glass hover-lift cursor-default"
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <Cpu className="w-6 h-6 text-green-500" />
-                <div className="text-left">
-                  <span className="text-2xl font-bold block">
-                    <AnimatedCounter value={stats.totalApplications} duration={2} />
-                  </span>
-                  <span className="text-xs text-muted-foreground">Applications</span>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
         </motion.div>
 
         {/* Floating icons decoration - behind content */}
@@ -229,8 +187,8 @@ export function Hero({ stats }: HeroProps) {
 const features = [
   {
     icon: Database,
-    title: "Curated Registry",
-    description: "Hand-picked packages and applications. Quality over quantity for the Zig ecosystem.",
+    title: "Automated Registry",
+    description: "Automatic fetching based on GitHub tags. Always up-to-date with the Zig ecosystem.",
   },
   {
     icon: Zap,
@@ -245,7 +203,7 @@ const features = [
   {
     icon: Wifi,
     title: "Community Driven",
-    description: "Add your project via Pull Request. Open source and transparent contribution process.",
+    description: "Automatically indexed from GitHub. Just tag your repo to join.",
   },
 ];
 
@@ -301,10 +259,9 @@ export function Features() {
   );
 }
 
-// Quick categories - only two main categories now
+// Quick categories - unified
 const categories = [
-  { label: "Packages", href: "/packages", icon: Package, color: "text-blue-500" },
-  { label: "Applications", href: "/applications", icon: Cpu, color: "text-green-500" },
+  { label: "All Projects", href: "/projects", icon: Package, color: "text-blue-500" },
 ];
 
 export function QuickCategories() {

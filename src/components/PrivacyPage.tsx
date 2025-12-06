@@ -3,16 +3,7 @@
 import * as React from "react";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
-
-interface SearchItem {
-  name: string;
-  owner: string;
-  repo: string;
-  description: string;
-  category?: string;
-  type: "package" | "application";
-  fullName: string;
-}
+import type { SearchItem } from "@/lib/schemas";
 
 interface PrivacyPageProps {
   searchItems?: SearchItem[];
@@ -41,7 +32,7 @@ export function PrivacyPage({ searchItems = [] }: PrivacyPageProps) {
           <section className="mb-8 p-4 bg-muted/50 rounded-lg border">
             <h2 className="text-2xl font-semibold mb-4">Disclaimer</h2>
             <p className="text-sm text-muted-foreground">
-              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} is an independent and unofficial registry of Zig packages and applications. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All packages, libraries, and applications listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. We do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.
+              {import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} is an independent and unofficial registry of Zig projects. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All projects listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. We do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.
             </p>
           </section>
 
@@ -68,6 +59,21 @@ export function PrivacyPage({ searchItems = [] }: PrivacyPageProps) {
             <h3 className="text-xl font-medium mb-3 mt-6">Local Storage</h3>
             <p>
               We use your browser's local storage (IndexedDB) to cache repository data from GitHub. This improves performance and reduces API requests. This data is stored locally on your device and is not transmitted to our servers.
+            </p>
+
+            <h3 className="text-xl font-medium mb-3 mt-6">Public Repository Indexing</h3>
+            <p>
+              Our automated system scans public GitHub repositories that are tagged with specific topics (e.g., <code>zig-package</code> or <code>zig-application</code>). We collect and display public metadata from these repositories, including:
+            </p>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Repository name, description, and URL</li>
+              <li>Owner username and avatar</li>
+              <li>Star counts, fork counts, and license information</li>
+              <li>Release information and tags</li>
+              <li>Dependency information from <code>build.zig.zon</code> files</li>
+            </ul>
+            <p>
+              This information is already publicly available on GitHub. By tagging your repository, you consent to having this public information indexed and displayed on our service. We do not access private repositories or collect personal data beyond what is publicly exposed via the GitHub API.
             </p>
           </section>
 

@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import { HowToAddPage } from "../components/HowToAddPage";
 import { loadRegistryData } from "../lib/registryLoader";
+import type { SearchItem } from "../lib/schemas";
 
 // Load registry data for search functionality
 const allEntries = await loadRegistryData();
@@ -15,7 +16,7 @@ const searchItems = allEntries.map(e => ({
   category: e.category,
   type: e.type,
   fullName: `${e.owner}/${e.repo}`,
-}));
+})) as SearchItem[];
 
 const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://zig-index.github.io";
 const siteName = import.meta.env.PUBLIC_SITE_NAME || "Zig Index";
@@ -37,7 +38,7 @@ const schema = {
       "@type": "HowToStep",
       "position": 2,
       "name": "Create JSON Entry",
-      "text": "Add a new JSON file in repositories/packages/ or repositories/applications/ with your project details."
+      "text": "Add a new JSON file in database/username/ with your project details."
     },
     {
       "@type": "HowToStep",

@@ -9,17 +9,55 @@ export const RegistryEntrySchema = z.object({
   owner: z.string(),
   repo: z.string(),
   description: z.string(),
+  type: z.enum(["package", "application", "project"]).default("project"),
   homepage: z.string().optional(),
   license: z.string().optional(),
   category: z.string().optional(),
-  download_url: z.string().url().optional(), // Optional download URL for applications
+  download_url: z.string().url().optional(),
+  readme: z.string().optional(),
+  dependencies: z.array(z.object({
+    name: z.string(),
+    url: z.string(),
+    hash: z.string().optional(),
+  })).optional(),
+  minimum_zig_version: z.string().optional(),
+  topics: z.array(z.string()).default([]),
+  stars: z.number().default(0),
+  forks: z.number().default(0),
+  watchers: z.number().default(0),
+  updated_at: z.string().optional(),
+  owner_avatar_url: z.string().optional(),
+  owner_bio: z.string().nullable().optional(),
+  owner_company: z.string().nullable().optional(),
+  owner_location: z.string().nullable().optional(),
+  owner_blog: z.string().nullable().optional(),
+  owner_twitter_username: z.string().nullable().optional(),
+  owner_followers: z.number().default(0),
+  owner_following: z.number().default(0),
+  owner_public_repos: z.number().default(0),
+  owner_public_gists: z.number().default(0),
+  owner_created_at: z.string().optional(),
+  releases: z.array(z.object({
+    tag_name: z.string(),
+    name: z.string().nullable(),
+    body: z.string().nullable(),
+    prerelease: z.boolean().default(false),
+    published_at: z.string(),
+    html_url: z.string(),
+    assets: z.array(z.object({
+      name: z.string(),
+      url: z.string(),
+      size: z.number(),
+      content_type: z.string(),
+    })).default([]),
+  })).default([]),
 });
 
 export type RegistryEntry = z.infer<typeof RegistryEntrySchema>;
 
 // Type for registry entry with category
 export type RegistryEntryWithCategory = RegistryEntry & {
-  type: "package" | "application";
+  type: "package" | "application" | "project";
   fullName: string;
   htmlUrl: string;
 };
@@ -30,7 +68,7 @@ export interface SearchItem {
   repo: string;
   description: string;
   category?: string;
-  type: "package" | "application";
+  type: "package" | "application" | "project";
   fullName: string;
 }
 
@@ -278,7 +316,8 @@ export const FilterSchema = z.object({
   minStars: z.number().min(0).optional(),
   license: z.string().optional(),
   language: z.string().optional(),
-  type: z.enum(["all", "package", "application"]).optional(),
+  topics: z.array(z.string()).optional(),
+  type: z.enum(["all", "package", "application", "project"]).optional(),
   updatedWithin: z.enum(["all", "day", "week", "month", "year"]).optional(),
 });
 
@@ -322,7 +361,7 @@ export function convertGitHubRepoToLiveStats(repo: GitHubRepo): LiveStats {
 // Convert registry entry to combined format
 export function convertRegistryEntryToCombined(
   entry: RegistryEntry,
-  type: "package" | "application"
+  type: "package" | "application" | "project"
 ): RegistryEntryWithCategory {
   return {
     ...entry,

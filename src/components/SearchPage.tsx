@@ -26,7 +26,7 @@ interface SearchItem {
   repo: string;
   description: string;
   category?: string;
-  type: "package" | "application";
+  type: "package" | "application" | "project";
   fullName: string;
 }
 
@@ -38,7 +38,7 @@ interface SearchPageProps {
 export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
   const [searchQuery, setSearchQuery] = React.useState(initialQuery);
   const [results, setResults] = React.useState<SearchItem[]>([]);
-  const [activeFilter, setActiveFilter] = React.useState<"all" | "package" | "application">("all");
+  const [activeFilter, setActiveFilter] = React.useState<"all" | "project" | "application">("all");
   const [isSearching, setIsSearching] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -73,7 +73,11 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
       
       // Apply type filter
       if (activeFilter !== "all") {
-        searchResults = searchResults.filter(item => item.type === activeFilter);
+        if (activeFilter === "project") {
+          searchResults = searchResults.filter(item => item.type === "package" || item.type === "project");
+        } else {
+          searchResults = searchResults.filter(item => item.type === activeFilter);
+        }
       }
       
       setResults(searchResults);
@@ -103,11 +107,11 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
     setSearchQuery(query);
   };
 
-  const getCategoryIcon = (type: "package" | "application") => {
-    return type === "package" ? Package : Cpu;
+  const getCategoryIcon = (type: "package" | "application" | "project") => {
+    return (type === "package" || type === "project") ? Package : Cpu;
   };
 
-  const packagesCount = results.filter(r => r.type === "package").length;
+  const packagesCount = results.filter(r => r.type === "package" || r.type === "project").length;
   const applicationsCount = results.filter(r => r.type === "application").length;
 
   return (
@@ -157,7 +161,7 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
               <Input
                 ref={inputRef}
                 type="text"
-                placeholder="Search packages, applications, or authors..."
+                placeholder="Search projects, applications, or authors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-12 h-14 text-lg bg-card border-2 focus:border-primary/50 rounded-xl"
@@ -192,9 +196,9 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
                   <Filter className="w-4 h-4" />
                   All ({results.length})
                 </TabsTrigger>
-                <TabsTrigger value="package" className="gap-2">
+                <TabsTrigger value="project" className="gap-2">
                   <Package className="w-4 h-4" />
-                  Packages ({packagesCount})
+                  Projects ({packagesCount})
                 </TabsTrigger>
                 <TabsTrigger value="application" className="gap-2">
                   <Cpu className="w-4 h-4" />
@@ -266,7 +270,7 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
                       <div className="flex items-start gap-4">
                         <div className={cn(
                           "p-3 rounded-lg shrink-0 transition-colors",
-                          item.type === "package" 
+                          (item.type === "package" || item.type === "project")
                             ? "bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20" 
                             : "bg-green-500/10 text-green-500 group-hover:bg-green-500/20"
                         )}>
@@ -279,11 +283,11 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
                             </h3>
                             <span className={cn(
                               "text-xs px-2 py-0.5 rounded-full shrink-0",
-                              item.type === "package"
+                              (item.type === "package" || item.type === "project")
                                 ? "bg-blue-500/10 text-blue-500"
                                 : "bg-green-500/10 text-green-500"
                             )}>
-                              {item.type}
+                              {item.type === "application" ? "Application" : "Project"}
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
@@ -313,7 +317,7 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
                 <h3 className="text-xl font-semibold mb-2">No results found</h3>
                 <p className="text-muted-foreground max-w-md mx-auto mb-6">
                   {searchQuery 
-                    ? `No packages or applications match "${searchQuery}". Try a different search term.`
+                    ? `No projects or applications match "${searchQuery}". Try a different search term.`
                     : "No items available in the current filter."}
                 </p>
                 {searchQuery && (

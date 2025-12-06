@@ -50,14 +50,15 @@ function formatDate(dateStr: string | null | undefined): string {
   return `${Math.floor(diffDays / 365)} years ago`;
 }
 
-function getCategoryIcon(type: "package" | "application") {
+function getCategoryIcon(type: "package" | "application" | "project") {
   if (type === "package") return Package;
-  return Cpu;
+  if (type === "application") return Cpu;
+  return Package; // Default for project
 }
 
-function getCategoryLabel(type: "package" | "application") {
-  if (type === "package") return "Package";
-  return "Application";
+function getCategoryLabel(type: "package" | "application" | "project") {
+  if (type === "application") return "Application";
+  return "Project";
 }
 
 // ============================================

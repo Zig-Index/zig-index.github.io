@@ -29,8 +29,6 @@ import { ThemeToggle } from "./ThemeToggle";
 import Fuse from "fuse.js";
 import { useNavbarStore } from "@/stores/useAppStore";
 import type { SearchItem } from "@/lib/schemas";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { SignInDialog } from "./SignInDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   DropdownMenu,
@@ -53,8 +51,7 @@ interface NavbarProps {
 }
 
 const navLinks = [
-  { href: "/packages", label: "Packages", icon: Package },
-  { href: "/applications", label: "Applications", icon: Cpu },
+  { href: "/projects", label: "Projects", icon: Package },
 ];
 
 // Default empty array to prevent re-renders
@@ -75,57 +72,31 @@ export function Navbar({
     localSearch, setLocalSearch
   } = useNavbarStore();
 
-  const { 
-    user, 
-    isAuthenticated, 
-    logout, 
-    showSignInDialog, 
-    setShowSignInDialog,
-    setToken,
-    setUser
-  } = useAuthStore();
-
-  // Handle OAuth callback
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const hash = window.location.hash;
-      const params = new URLSearchParams(hash.substring(1)); // remove #
-      const accessToken = params.get("access_token");
-
-      if (accessToken) {
-        // Clear hash to clean up URL
-        window.history.replaceState(null, "", window.location.pathname);
-        
-        // Verify token and set user
-        const verifyToken = async () => {
-          try {
-            const userResponse = await fetch("https://api.github.com/user", {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                Accept: "application/vnd.github.v3+json",
-              },
-            });
-
-            if (userResponse.ok) {
-              const userData = await userResponse.json();
-              setToken(accessToken);
-              setUser({
-                login: userData.login,
-                avatar_url: userData.avatar_url,
-                name: userData.name,
-              });
-            }
-          } catch (e) {
-            console.error("Failed to verify token", e);
-          }
-        };
-        verifyToken();
-      }
-    }
-  }, [setToken, setUser]);
-
   const searchRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const [starCount, setStarCount] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    const fetchStars = async () => {
+      try {
+        const repoUrl = import.meta.env.PUBLIC_REPO_URL || "https://github.com/Zig-Index/zig-index.github.io";
+        // Extract owner/repo from URL
+        const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
+        if (match) {
+          const [, owner, repo] = match;
+          const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
+          if (response.ok) {
+            const data = await response.json();
+            setStarCount(data.stargazers_count);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch stars:", error);
+      }
+    };
+
+    fetchStars();
+  }, []);
   
   // Build search index
   const fuse = React.useMemo(() => {
@@ -157,7 +128,11 @@ export function Navbar({
     
     // Apply type filter
     if (typeFilter !== "all") {
-      itemsToShow = itemsToShow.filter(item => item.type === typeFilter);
+      if (typeFilter === "project") {
+        itemsToShow = itemsToShow.filter(item => item.type === "package" || item.type === "project");
+      } else {
+        itemsToShow = itemsToShow.filter(item => item.type === typeFilter);
+      }
     }
     
     // Limit to 12 suggestions
@@ -206,8 +181,8 @@ export function Navbar({
     inputRef.current?.focus();
   };
 
-  const getCategoryIcon = (type: "package" | "application") => {
-    return type === "package" ? Package : Cpu;
+  const getCategoryIcon = (type: "package" | "application" | "project") => {
+    return (type === "package" || type === "project") ? Package : Cpu;
   };
 
   return (
@@ -303,13 +278,13 @@ export function Navbar({
                     All ({searchItems.length})
                   </Button>
                   <Button
-                    variant={typeFilter === "package" ? "default" : "ghost"}
+                    variant={typeFilter === "project" ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => setTypeFilter("package")}
+                    onClick={() => setTypeFilter("project")}
                     className="h-6 text-xs px-2"
                   >
                     <Package className="w-3 h-3 mr-1" />
-                    Packages ({searchItems.filter(i => i.type === "package").length})
+                    Projects ({searchItems.filter(i => i.type === "package" || i.type === "project").length})
                   </Button>
                   <Button
                     variant={typeFilter === "application" ? "default" : "ghost"}
@@ -392,20 +367,12 @@ export function Navbar({
                     ) : (
                       <>
                         <a
-                          href="/packages"
+                          href="/projects"
                           className="flex items-center justify-center gap-2 flex-1 p-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
-                          title="Browse all packages"
+                          title="Browse all projects"
                         >
                           <Package className="w-4 h-4" />
-                          Browse Packages
-                        </a>
-                        <a
-                          href="/applications"
-                          className="flex items-center justify-center gap-2 flex-1 p-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
-                          title="Browse all applications"
-                        >
-                          <Cpu className="w-4 h-4" />
-                          Browse Applications
+                          Browse Projects
                         </a>
                       </>
                     )}
@@ -432,7 +399,7 @@ export function Navbar({
             </a>
           </Button>
 
-          <Button variant="ghost" size="icon" asChild className="hidden sm:flex" title={`View ${import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} on GitHub`}>
+          <Button variant="ghost" size="sm" asChild className="hidden sm:flex gap-2" title={`View ${import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} on GitHub`}>
             <a 
               href={import.meta.env.PUBLIC_REPO_URL || "https://github.com/Zig-Index/zig-index.github.io"}
               target="_blank" 
@@ -440,48 +407,10 @@ export function Navbar({
               aria-label={`View ${import.meta.env.PUBLIC_SITE_NAME || "Zig Index"} source code on GitHub`}
             >
               <Github className="w-4 h-4" />
+              {starCount !== null && <span className="font-medium">{starCount.toLocaleString()} Stars</span>}
             </a>
           </Button>
-
-          {/* Auth Button - Desktop */}
-          {isAuthenticated && user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 p-0 border border-border/50 hidden sm:flex">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={user.avatar_url} alt={user.login} />
-                    <AvatarFallback>{user.login.slice(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.name || user.login}</p>
-                    <p className="text-xs leading-none text-muted-foreground">@{user.login}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="text-red-600 dark:text-red-400 cursor-pointer">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setShowSignInDialog(true)}
-              className="hidden sm:flex gap-2"
-            >
-              <Github className="w-4 h-4" />
-              Sign In
-            </Button>
-          )}
           
-          <SignInDialog open={showSignInDialog} onOpenChange={setShowSignInDialog} />
-
           {/* Mobile Menu */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="lg:hidden">
@@ -564,44 +493,7 @@ export function Navbar({
                     Account & Actions
                   </span>
 
-                  {/* Mobile Auth */}
-                  {isAuthenticated && user ? (
-                    <div className="flex flex-col gap-2 mb-2 px-2">
-                       <div className="flex items-center gap-3 py-2 mb-2 bg-muted/50 rounded-lg p-3">
-                          <Avatar className="w-10 h-10 border border-border/50">
-                            <AvatarImage src={user.avatar_url} alt={user.login} />
-                            <AvatarFallback>{user.login.slice(0, 2).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col overflow-hidden">
-                            <span className="font-medium text-sm truncate">{user.name || user.login}</span>
-                            <span className="text-xs text-muted-foreground truncate">@{user.login}</span>
-                          </div>
-                       </div>
-                       <Button 
-                         variant="outline" 
-                         className="justify-start h-10 text-sm w-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 border-red-200 dark:border-red-900/30"
-                         onClick={() => {
-                           logout();
-                           setIsOpen(false);
-                         }}
-                       >
-                         <LogOut className="w-4 h-4 mr-2" />
-                         Sign Out
-                       </Button>
-                    </div>
-                  ) : (
-                    <Button 
-                      variant="secondary" 
-                      className="justify-start h-12 text-base mb-2"
-                      onClick={() => {
-                        setShowSignInDialog(true);
-                        setIsOpen(false);
-                      }}
-                    >
-                      <Github className="w-5 h-5 mr-3" />
-                      Sign In with GitHub
-                    </Button>
-                  )}
+
 
                   <Button asChild className="justify-start h-12 text-base" title="Add your Zig project">
                     <a href="/how-to-add" onClick={() => setIsOpen(false)}>

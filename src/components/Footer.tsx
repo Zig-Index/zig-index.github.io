@@ -5,9 +5,8 @@ import { Github, Heart, Zap, ExternalLink, Coffee } from "lucide-react";
 
 const footerLinks = {
   product: [
-    { label: "Packages", href: "/packages" },
-    { label: "Applications", href: "/applications" },
-    { label: "Add Your Package", href: "/how-to-add" },
+    { label: "Projects", href: "/projects" },
+    { label: "Add Your Project", href: "/how-to-add" },
   ],
   resources: [
     { label: "Zig Language", href: "https://ziglang.org", external: true },
@@ -36,8 +35,8 @@ export function Footer() {
               <span className="font-bold text-xl">{import.meta.env.PUBLIC_SITE_NAME || "Zig Index"}</span>
             </a>
             <p className="text-sm text-muted-foreground mb-4">
-              Discover and explore the best Zig packages and applications. 
-              Client-side, offline-first, and open source.
+              Discover and explore Zig projects. Automatic fetching based on GitHub tags. 
+              Client-side,  and open source.
             </p>
             <div className="flex items-center gap-3">
               <a
