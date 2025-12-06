@@ -189,7 +189,7 @@ function getDependencyInfo(dep: ZigDependency): {
   }
   
   // Check for hash-only dependency (no URL, just hash provided)
-  if (!url || url === '' || dep.hash && !url.startsWith('http')) {
+  if (!url || url === '' || (dep.hash && !url.startsWith('http') && !url.startsWith('git'))) {
     return {
       name,
       repoUrl: null,
