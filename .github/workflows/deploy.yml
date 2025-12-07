@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
   schedule:
-    # Check for updates every 15 minutes
-    - cron: '*/15 * * * *'
+    # Check for updates every hour
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -82,7 +82,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "Update registry submodule"
-          git push
+          git push origin HEAD:main
 
   build:
     runs-on: ubuntu-latest

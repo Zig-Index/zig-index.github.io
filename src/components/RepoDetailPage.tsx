@@ -753,7 +753,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
             <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-primary/10 rounded-full blur-3xl opacity-50" />
           </div>
           
-          <div className="container mx-auto px-4 py-8 relative z-10 w-full overflow-hidden">
+          <div className="container mx-auto px-4 py-8 relative z-10 w-full max-w-full overflow-hidden">
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4 flex-wrap">
               <a href="/" className="hover:text-foreground transition-colors">Home</a>
@@ -763,12 +763,12 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
               <span className="text-foreground break-all">{fullName}</span>
             </div>
 
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 max-w-full">
               {/* Title and Meta */}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 max-w-full">
                 <div className="flex items-center gap-3 mb-2 flex-wrap">
                   <div className="min-w-0 w-full sm:w-auto">
-                    <h1 className="text-2xl sm:text-3xl font-bold wrap-break-word">{displayData.name}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold break-words">{displayData.name}</h1>
                     <p className="text-muted-foreground">
                       by{" "}
                       <a 
@@ -781,7 +781,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                   </div>
                 </div>
 
-                <p className="text-base sm:text-lg text-muted-foreground mb-4 wrap-break-word">
+                <p className="text-base sm:text-lg text-muted-foreground mb-4 break-words">
                   {displayData.description}
                 </p>
 
@@ -1060,7 +1060,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 py-8 relative z-10">
+        <div className="container mx-auto px-4 py-8 relative z-10 max-w-full overflow-hidden">
           {/* Warning for deleted repos */}
           {isDeleted && (
             <motion.div

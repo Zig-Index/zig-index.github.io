@@ -62,7 +62,8 @@ export function Hero({}: HeroProps) {
           <motion.div variants={itemVariants} className="mb-6">
             <Badge variant="outline" className="px-4 py-1.5 text-sm">
               <Zap className="w-3 h-3 mr-1.5" />
-              Community-Driven • Automated Discovery • Open Source
+              <span className="hidden sm:inline">Community-Driven • Automated Discovery • Open Source</span>
+              <span className="sm:hidden">Automated • Open Source</span>
             </Badge>
           </motion.div>
 
