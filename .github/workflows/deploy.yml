@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   check-changes:
@@ -80,7 +80,6 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
-          overwrite: true   # ⭐ IMPORTANT FIX
 
   deploy:
     needs: build
