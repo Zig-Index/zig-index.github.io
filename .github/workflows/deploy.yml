@@ -52,8 +52,8 @@ jobs:
           git add -A
           git commit -m "Update registry submodule"
 
-          # Push using PAT stored in GH_TOKEN
-          git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/Zig-Index/zig-index.github.io.git HEAD:main
+          # Push using the default GITHUB_TOKEN for this repo
+          git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
 
   build:
     needs: check-changes
@@ -78,6 +78,9 @@ jobs:
 
       - name: Upload Artifact for Pages
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+          name: github-pages
 
   deploy:
     runs-on: ubuntu-latest
