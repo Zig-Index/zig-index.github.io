@@ -51,6 +51,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "Update registry submodule"
+
+          # IMPORTANT: pull latest remote before pushing
+          git pull --rebase https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git main
+
+          # Now push safely without conflict
           git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
 
   build:
@@ -77,13 +82,14 @@ jobs:
       - name: Upload Artifact for Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist 
+          path: ./dist
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
+
     steps:
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
