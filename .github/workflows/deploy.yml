@@ -13,6 +13,8 @@ permissions:
 jobs:
   update-submodule:
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.changecheck.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,6 +22,7 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
 
       - name: Update registry submodule
+        id: changecheck
         run: |
           git submodule update --remote --merge src/registry
           if [[ -n "$(git status --porcelain)" ]]; then
@@ -32,7 +35,6 @@ jobs:
           else
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
-        id: changecheck
 
   build:
     needs: update-submodule
@@ -61,6 +63,7 @@ jobs:
 
   deploy:
     needs: build
+    if: needs.update-submodule.outputs.changed == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
