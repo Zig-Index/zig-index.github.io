@@ -24,7 +24,9 @@ jobs:
       - name: Update registry submodule
         id: changecheck
         run: |
-          git submodule update --remote --merge src/registry
+          git -C src/registry fetch origin main
+          git -C src/registry reset --hard origin/main
+
           if [[ -n "$(git status --porcelain)" ]]; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
