@@ -1,10 +1,8 @@
-name: Deploy to GitHub Pages
+name: Registry Auto Deploy
 
 on:
-  push:
-    branches: [main]
   schedule:
-    - cron: '0 * * * *'
+    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -12,78 +10,61 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
 jobs:
-  check-changes:
+  update-submodule:
     runs-on: ubuntu-latest
-    outputs:
-      should_deploy: ${{ steps.check.outputs.should_deploy }}
-      has_submodule_changes: ${{ steps.check.outputs.has_submodule_changes }}
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
 
-      - name: Detect changes
-        id: check
+      - name: Update registry submodule
         run: |
-          echo "should_deploy=false" >> $GITHUB_OUTPUT
-          echo "has_submodule_changes=false" >> $GITHUB_OUTPUT
-          git submodule update --init --recursive --remote
-          if ! git diff --quiet; then
-            echo "has_submodule_changes=true" >> $GITHUB_OUTPUT
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          git submodule update --remote --merge sc/registry
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add sc/registry
+            git commit -m "Auto-update registry"
+            git push
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
           fi
-
-      - name: Commit submodule update
-        if: steps.check.outputs.has_submodule_changes == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Update registry submodule"
-          git pull --rebase https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git main
-          git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+        id: changecheck
 
   build:
-    needs: check-changes
-    if: needs.check-changes.outputs.should_deploy == 'true'
+    needs: update-submodule
+    if: needs.update-submodule.outputs.changed == 'true'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
 
-      - name: Build Astro site
-        uses: withastro/action@v3
-        with:
-          package-manager: bun@latest
-        env:
-          PUBLIC_SITE_NAME: Zig Index
-          PUBLIC_SITE_URL: https://zig-index.github.io
-          PUBLIC_REPO_URL: https://github.com/Zig-Index/zig-index.github.io
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
 
-      - name: Upload Artifact for Pages
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build project
+        run: bun run build
+
+      - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
-          overwrite: true
+          name: github-pages
+          retention-days: 1
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
