@@ -2,7 +2,7 @@ name: Registry Auto Deploy
 
 on:
   schedule:
-    - cron: "0 0 * * *"   
+    - cron: "0 0 * * *"
   workflow_dispatch:
 
 permissions:
@@ -14,29 +14,26 @@ jobs:
   update-submodule:
     runs-on: ubuntu-latest
     outputs:
-      changed: ${{ steps.changecheck.outputs.changed }}
+      changed: ${{ steps.check.outputs.changed }}
 
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-          token: ${{ secrets.GH_TOKEN }}   
+          token: ${{ secrets.GH_TOKEN }}
 
-      - name: Update registry submodule correctly (fast-forward)
-        id: changecheck
+      - name: Update registry submodule (fast-forward only)
+        id: check
         run: |
-          # Fetch and fast-forward the submodule
           git -C src/registry fetch origin main
           git -C src/registry merge --ff-only origin/main || true
 
-          # Detect changes
           if [[ -n "$(git status --porcelain)" ]]; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
 
             git add src/registry
             git commit -m "Auto-update registry"
-
             git push https://${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
 
             echo "changed=true" >> $GITHUB_OUTPUT
@@ -55,33 +52,31 @@ jobs:
           submodules: recursive
           token: ${{ secrets.GH_TOKEN }}
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v1
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - run: bun install --frozen-lockfile
 
-      - name: Build project
-        run: bun run build
+      - run: bun run build
 
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
           name: github-pages
           retention-days: 2
 
   deploy:
-    needs: build
+    needs:
+      - update-submodule
+      - build
     if: needs.update-submodule.outputs.changed == 'true'
     runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
         with:
           token: ${{ secrets.GH_TOKEN }}
