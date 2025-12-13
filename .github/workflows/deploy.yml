@@ -2,7 +2,7 @@ name: Registry Auto Deploy
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 0 * * *"   # every day
   workflow_dispatch:
 
 permissions:
@@ -13,8 +13,6 @@ permissions:
 jobs:
   update-submodule:
     runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.check.outputs.changed }}
 
     steps:
       - uses: actions/checkout@v4
@@ -22,28 +20,24 @@ jobs:
           submodules: recursive
           token: ${{ secrets.GH_TOKEN }}
 
-      - name: Update registry submodule (fast-forward only)
-        id: check
+      - name: Force update registry submodule
         run: |
           git -C src/registry fetch origin main
-          git -C src/registry merge --ff-only origin/main || true
+          git -C src/registry checkout main
+          git -C src/registry pull origin main || true
 
-          if [[ -n "$(git status --porcelain)" ]]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-            git add src/registry
-            git commit -m "Auto-update registry"
-            git push https://${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+          git add src/registry
 
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
+          # Always create a commit (even if no changes)
+          git commit --allow-empty -m "Scheduled registry sync"
+
+          git push https://${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
 
   build:
     needs: update-submodule
-    if: needs.update-submodule.outputs.changed == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -65,10 +59,7 @@ jobs:
           retention-days: 2
 
   deploy:
-    needs:
-      - update-submodule
-      - build
-    if: needs.update-submodule.outputs.changed == 'true'
+    needs: build
     runs-on: ubuntu-latest
 
     environment:
