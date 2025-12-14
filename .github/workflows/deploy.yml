@@ -2,7 +2,7 @@ name: Registry Auto Deploy
 
 on:
   schedule:
-    - cron: "0 0 * * *"   # every day
+    - cron: "0 0 * * *"
   workflow_dispatch:
 
 permissions:
@@ -32,7 +32,18 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # ✅ BUILD WITH ENV VARIABLES
       - name: Build project
+        env:
+          PUBLIC_GOOGLE_ANALYTICS_ID: ${{ vars.PUBLIC_GOOGLE_ANALYTICS_ID }}
+
+          PUBLIC_SITE_NAME: ${{ vars.PUBLIC_SITE_NAME }}
+          PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+          PUBLIC_REPO_URL: ${{ vars.PUBLIC_REPO_URL }}
+
+          PUBLIC_AUTHOR_NAME: ${{ vars.PUBLIC_AUTHOR_NAME }}
+          PUBLIC_AUTHOR_URL: ${{ vars.PUBLIC_AUTHOR_URL }}
+          PUBLIC_DONATION_URL: ${{ vars.PUBLIC_DONATION_URL }}
         run: bun run build
 
       - name: Upload Pages Artifact
